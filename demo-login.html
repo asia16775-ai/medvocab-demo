@@ -21,10 +21,49 @@
       width: 360px;
       box-shadow: 0 20px 60px rgba(0,0,0,0.3);
     }
-    .logo { text-align: center; margin-bottom: 28px; }
+    .logo { text-align: center; margin-bottom: 24px; }
     .logo .icon { font-size: 48px; display: block; margin-bottom: 8px; }
     .logo h1 { font-size: 26px; font-weight: 700; color: #1a237e; letter-spacing: 1px; }
     .logo p { font-size: 13px; color: #888; margin-top: 4px; }
+    .badge {
+      display: inline-block;
+      background: #e3f2fd;
+      color: #1565c0;
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-weight: 600;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+
+    /* ── Mode Toggle ── */
+    .mode-toggle {
+      display: flex;
+      background: #f0f2f5;
+      border-radius: 10px;
+      padding: 4px;
+      margin-bottom: 24px;
+      gap: 4px;
+    }
+    .mode-btn {
+      flex: 1;
+      padding: 9px;
+      border: none;
+      border-radius: 7px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      background: transparent;
+      color: #999;
+      transition: all 0.2s;
+    }
+    .mode-btn.active {
+      background: #fff;
+      color: #1a237e;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+    }
+
     label { display: block; font-size: 13px; color: #555; margin-bottom: 6px; font-weight: 500; }
     input[type="password"] {
       width: 100%;
@@ -38,6 +77,7 @@
     }
     input:focus { border-color: #1a237e; }
     .hint { font-size: 11px; color: #aaa; margin-top: 5px; }
+
     .btn {
       width: 100%;
       padding: 13px;
@@ -48,16 +88,19 @@
       font-size: 15px;
       font-weight: 600;
       cursor: pointer;
-      margin-top: 22px;
+      margin-top: 20px;
       transition: background 0.2s;
     }
     .btn:hover { background: #283593; }
     .btn:disabled { background: #90a4ae; cursor: not-allowed; }
+    .btn.admin-mode { background: #37474f; }
+    .btn.admin-mode:hover { background: #263238; }
+
     .divider {
       display: flex;
       align-items: center;
       gap: 10px;
-      margin: 20px 0 16px;
+      margin: 18px 0 14px;
     }
     .divider hr { flex: 1; border: none; border-top: 1px solid #eee; }
     .divider span { font-size: 12px; color: #bbb; }
@@ -74,6 +117,7 @@
       transition: background 0.2s;
     }
     .btn-secondary:hover { background: #e8eaf6; }
+
     .error {
       background: #ffebee;
       color: #c62828;
@@ -84,16 +128,15 @@
       display: none;
     }
     .footer { text-align: center; margin-top: 24px; font-size: 11px; color: #ccc; }
-    .badge {
-      display: inline-block;
-      background: #e3f2fd;
-      color: #1565c0;
-      font-size: 10px;
-      padding: 2px 8px;
-      border-radius: 20px;
-      font-weight: 600;
-      margin-left: 6px;
-      vertical-align: middle;
+
+    .admin-hint {
+      background: #eceff1;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 12px;
+      color: #607d8b;
+      margin-top: 10px;
+      text-align: center;
     }
   </style>
 </head>
@@ -105,18 +148,33 @@
       <p>ระบบทบทวนคำศัพท์ทางการแพทย์ · โลหิตวิทยา</p>
     </div>
 
-    <label>รหัสผู้ใช้ (ตัวเลข 3 หลักที่ตั้งไว้ตอนลงทะเบียน)</label>
-    <input type="password" id="uid" placeholder="•••" maxlength="3" inputmode="numeric">
-    <p class="hint">ระบบไม่เก็บชื่อหรือรหัสนิสิต — ใช้รหัส 3 หลักส่วนตัวเป็นตัวระบุเท่านั้น</p>
+    <!-- Mode Toggle -->
+    <div class="mode-toggle">
+      <button class="mode-btn active" id="btn-user" onclick="switchMode('user')">👤 นิสิต</button>
+      <button class="mode-btn" id="btn-admin" onclick="switchMode('admin')">🔐 ผู้วิจัย</button>
+    </div>
 
-    <button class="btn" id="login-btn" onclick="doLogin()">เข้าสู่ระบบ</button>
-    <div class="error" id="err"></div>
+    <!-- User Login -->
+    <div id="user-section">
+      <label>รหัสผู้ใช้ (ตัวเลข 3 หลักที่ตั้งไว้ตอนลงทะเบียน)</label>
+      <input type="password" id="uid" placeholder="•••" maxlength="3" inputmode="numeric">
+      <p class="hint">ระบบไม่เก็บชื่อหรือรหัสนิสิต — ใช้รหัส 3 หลักส่วนตัวเป็นตัวระบุเท่านั้น</p>
+      <button class="btn" id="login-btn" onclick="doLogin()">เข้าสู่ระบบ</button>
+      <div class="error" id="user-err"></div>
+      <div class="divider"><hr><span>ยังไม่มีบัญชี?</span><hr></div>
+      <button class="btn-secondary" onclick="location.href='demo-register.html'">
+        📝 ลงทะเบียนครั้งแรก (Register)
+      </button>
+    </div>
 
-    <div class="divider"><hr><span>ยังไม่มีบัญชี?</span><hr></div>
-
-    <button class="btn-secondary" onclick="location.href='demo-register.html'">
-      📝 ลงทะเบียนครั้งแรก (Register)
-    </button>
+    <!-- Admin Login -->
+    <div id="admin-section" style="display:none">
+      <label>รหัสผ่านผู้วิจัย</label>
+      <input type="password" id="admin-pass" placeholder="••••••••" autocomplete="off">
+      <button class="btn admin-mode" id="admin-btn" onclick="doAdminLogin()">เข้าสู่ Admin Panel</button>
+      <div class="error" id="admin-err"></div>
+      <div class="admin-hint">🔒 เฉพาะผู้วิจัยเท่านั้น</div>
+    </div>
 
     <div class="footer">
       คณะแพทยศาสตร์ มหาวิทยาลัยบูรพา · ปีการศึกษา 2569<br>
@@ -131,17 +189,29 @@
       'apikey': SUPABASE_KEY,
       'Authorization': `Bearer ${SUPABASE_KEY}`
     };
+    const ADMIN_PASSWORD = 'ADMIN2025';
 
+    // ── Mode Switch ──
+    function switchMode(mode) {
+      const isAdmin = mode === 'admin';
+      document.getElementById('user-section').style.display  = isAdmin ? 'none' : 'block';
+      document.getElementById('admin-section').style.display = isAdmin ? 'block' : 'none';
+      document.getElementById('btn-user').classList.toggle('active', !isAdmin);
+      document.getElementById('btn-admin').classList.toggle('active', isAdmin);
+      document.getElementById('user-err').style.display  = 'none';
+      document.getElementById('admin-err').style.display = 'none';
+    }
+
+    // ── User Login ──
     async function doLogin() {
       const uid = document.getElementById('uid').value.trim();
-      const err = document.getElementById('err');
+      const err = document.getElementById('user-err');
       const btn = document.getElementById('login-btn');
       err.style.display = 'none';
 
       if (uid.length !== 3 || isNaN(uid)) {
         err.textContent = '⚠️ กรุณากรอกตัวเลข 3 หลักให้ครบถ้วน';
-        err.style.display = 'block';
-        return;
+        err.style.display = 'block'; return;
       }
 
       btn.disabled = true;
@@ -149,11 +219,10 @@
 
       try {
         const res = await fetch(
-          `${SUPABASE_URL}/rest/v1/users?uid=eq.${uid}&select=uid,group,pre_test_done`,
+          `${SUPABASE_URL}/rest/v1/users?uid=eq.${uid}&select=uid`,
           { headers: HEADERS }
         );
         const data = await res.json();
-
         if (!data || data.length === 0) {
           err.textContent = '❌ ไม่พบบัญชีนี้ในระบบ กรุณาลงทะเบียนก่อน';
           err.style.display = 'block';
@@ -170,7 +239,26 @@
       btn.textContent = 'เข้าสู่ระบบ';
     }
 
-    document.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+    // ── Admin Login ──
+    function doAdminLogin() {
+      const pass = document.getElementById('admin-pass').value.trim().toUpperCase();
+      const err  = document.getElementById('admin-err');
+      err.style.display = 'none';
+
+      if (pass === ADMIN_PASSWORD) {
+        sessionStorage.setItem('mv_admin', '1');
+        location.href = 'demo-admin.html';
+      } else {
+        err.textContent = '❌ รหัสผ่านไม่ถูกต้อง';
+        err.style.display = 'block';
+      }
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.key !== 'Enter') return;
+      const adminVisible = document.getElementById('admin-section').style.display !== 'none';
+      if (adminVisible) doAdminLogin(); else doLogin();
+    });
   </script>
 </body>
 </html>
