@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MedVocab — Quiz</title>
+  <style>
+    :root { --primary: #003087; --primary-l: #0051CC; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f2f5; min-height: 100vh; }
+    nav {
+      background: linear-gradient(135deg, var(--primary), var(--primary-l));
+      padding: 14px 24px; display: flex; align-items: center;
+      justify-content: space-between; color: #fff;
+      box-shadow: 0 2px 10px rgba(0,48,135,0.3);
+    }
+    nav .brand { font-size: 18px; font-weight: 800; }
+    nav .nav-right { font-size: 13px; opacity: 0.85; }
+
+    .container { max-width: 640px; margin: 28px auto; padding: 0 16px 40px; }
+
+    .progress-wrap { background: #fff; border-radius: 14px; padding: 16px 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); margin-bottom: 20px; }
+    .progress-label { display: flex; justify-content: space-between; font-size: 13px; color: #555; margin-bottom: 10px; font-weight: 600; }
+    .progress-bar { height: 8px; background: #e8eaf6; border-radius: 99px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, #1565c0, #0d47a1); border-radius: 99px; transition: width 0.4s ease; }
+
+    .question-card { background: #fff; border-radius: 16px; padding: 28px; box-shadow: 0 2px 14px rgba(0,0,0,0.07); margin-bottom: 16px; }
+    .q-label { font-size: 11px; font-weight: 700; color: #1565c0; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+    .q-chapter { display: inline-block; background: #e3f2fd; color: #1565c0; font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; margin-bottom: 10px; }
+    .q-text { font-size: 16px; font-weight: 700; color: #1a1a2e; line-height: 1.6; }
+
+    .choices { display: flex; flex-direction: column; gap: 10px; }
+    .choice-btn {
+      width: 100%; padding: 14px 18px; border-radius: 12px; border: 2px solid #e8eaf6;
+      background: #fff; font-size: 14px; font-weight: 600; color: #333; cursor: pointer;
+      text-align: left; transition: all 0.15s; font-family: inherit; line-height: 1.4;
+    }
+    .choice-btn:hover:not(:disabled) { border-color: #1565c0; background: #e3f2fd; color: #0d47a1; }
+    .choice-btn.correct { border-color: #2e7d32; background: #e8f5e9; color: #1b5e20; }
+    .choice-btn.wrong { border-color: #c62828; background: #ffebee; color: #b71c1c; }
+    .choice-btn.reveal-correct { border-color: #2e7d32; background: #e8f5e9; color: #1b5e20; }
+    .choice-btn:disabled { cursor: default; }
+    .choice-letter { display: inline-block; width: 24px; height: 24px; border-radius: 50%; background: rgba(21,101,192,0.1);
+      color: #1565c0; font-size: 12px; font-weight: 800; text-align: center; line-height: 24px; margin-right: 10px; flex-shrink: 0; }
+    .choice-btn.correct .choice-letter { background: #2e7d32; color: #fff; }
+    .choice-btn.wrong .choice-letter { background: #c62828; color: #fff; }
+    .choice-btn.reveal-correct .choice-letter { background: #2e7d32; color: #fff; }
+
+    .explain-card { background: #fff; border-radius: 16px; padding: 24px; box-shadow: 0 2px 14px rgba(0,0,0,0.07); margin-top: 16px; display: none; }
+    .explain-header { font-size: 18px; font-weight: 800; margin-bottom: 4px; }
+    .explain-header.correct { color: #2e7d32; }
+    .explain-header.wrong { color: #c62828; }
+    .explain-subtitle { font-size: 13px; color: #777; margin-bottom: 20px; }
+    .explain-divider { border: none; border-top: 1px solid #f0f0f0; margin: 16px 0; }
+    .explain-title { font-size: 12px; font-weight: 700; color: #aaa; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+    .explain-item { display: flex; gap: 12px; margin-bottom: 14px; align-items: flex-start; }
+    .explain-dot { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; flex-shrink: 0; margin-top: 1px; }
+    .dot-c { background: #e8f5e9; color: #2e7d32; }
+    .dot-w { background: #fce4ec; color: #c62828; }
+    .explain-text { font-size: 13px; color: #444; line-height: 1.6; }
+    .explain-text strong { color: #222; }
+
+    .btn-next {
+      width: 100%; padding: 14px; margin-top: 20px;
+      background: linear-gradient(135deg, #1565c0, #0d47a1);
+      color: #fff; border: none; border-radius: 12px; font-size: 15px; font-weight: 700;
+      cursor: pointer; font-family: inherit; transition: all 0.2s;
+      box-shadow: 0 4px 14px rgba(21,101,192,0.3);
+    }
+    .btn-next:hover { filter: brightness(1.08); }
+
+    /* Locked / done states */
+    .state-card { background: #fff; border-radius: 20px; padding: 40px 28px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); text-align: center; }
+    .state-icon { font-size: 56px; margin-bottom: 16px; }
+    .state-title { font-size: 20px; font-weight: 800; margin-bottom: 8px; }
+    .state-desc { font-size: 14px; color: #666; line-height: 1.7; margin-bottom: 24px; }
+    .countdown-box { background: #e3f2fd; border-radius: 12px; padding: 14px 20px; display: inline-block; margin: 12px auto 20px; }
+    .countdown-box .label { font-size: 11px; color: #1565c0; font-weight: 700; margin-bottom: 4px; }
+    .countdown-box .time { font-size: 22px; font-weight: 800; color: #0d47a1; }
+    .btn-home { padding: 13px 32px; background: linear-gradient(135deg, var(--primary), var(--primary-l)); color: #fff; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; }
+
+    /* Result */
+    .result-card { background: #fff; border-radius: 20px; padding: 40px 28px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); text-align: center; }
+    .result-score { font-size: 48px; font-weight: 800; color: #1565c0; margin: 20px 0 8px; }
+    .result-score span { font-size: 20px; color: #999; }
+
+    .loading { text-align: center; padding: 60px; color: #aaa; font-size: 15px; }
+  </style>
+</head>
+<body>
+  <nav>
+    <span class="brand">🩺 MedVocab</span>
+    <span class="nav-right" id="nav-label">🔬 Quiz · <span id="nav-user">—</span></span>
+  </nav>
+  <div class="container" id="main">
+    <div class="loading">⏳ กำลังโหลด...</div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://dbchducvmgkkccwemmhl.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_5O2V4_4eY3umLJgQhm6BAQ_0psABX8g';
+    const HEADERS = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' };
+
+    const username = localStorage.getItem('mv_current');
+    if (!username) location.href = 'demo-login.html';
+    document.getElementById('nav-user').textContent = username;
+
+    // รับ session number จาก URL param: demo-quiz.html?s=1
+    const params = new URLSearchParams(location.search);
+    const SESSION = parseInt(params.get('s')) || 1; // 1, 2, 3
+    const SESSION_LABELS = { 1: 'Day 1', 2: 'Day 3', 3: 'Day 7' };
+    const SESSION_DATE_KEYS = { 1: 'day1_date', 2: 'day3_date', 3: 'day7_date' };
+    const NEXT_LABELS = { 1: 'Quiz Day 3 (1 มิ.ย.)', 2: 'Quiz Day 7 (5 มิ.ย.)', 3: 'Post-test (12 มิ.ย.)' };
+    const DONE_KEYS = { 1: 'quiz1_done', 2: 'quiz2_done', 3: 'quiz3_done' };
+    const SCORE_KEYS = { 1: 'quiz1_score', 2: 'quiz2_score', 3: 'quiz3_score' };
+
+    document.getElementById('nav-label').innerHTML = `🔬 Quiz ${SESSION_LABELS[SESSION]} · <span id="nav-user">${username}</span>`;
+
+    const LETTERS = ['A', 'B', 'C', 'D', 'E'];
+    let questions = [];
+    let current = 0;
+    let score = 0;
+    let answered = false;
+    let shuffledChoices = [];
+
+    function shuffle(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function buildChoices(q) {
+      return shuffle([
+        { text: q.correct_answer, explain: q.explain_correct || '—', isCorrect: true },
+        { text: q.wrong1, explain: q.explain_wrong1 || '—', isCorrect: false },
+        { text: q.wrong2, explain: q.explain_wrong2 || '—', isCorrect: false },
+        { text: q.wrong3, explain: q.explain_wrong3 || '—', isCorrect: false },
+        { text: q.wrong4, explain: q.explain_wrong4 || '—', isCorrect: false },
+      ]);
+    }
+
+    // เปรียบเทียบวันที่ (ไม่สนเวลา)
+    function todayStr() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    }
+
+    function formatThaiDate(dateStr) {
+      if (!dateStr) return '—';
+      const months = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+      const [y, m, d] = dateStr.split('-');
+      return `${parseInt(d)} ${months[parseInt(m)-1]} ${parseInt(y)+543}`;
+    }
+
+    async function init() {
+      try {
+        // โหลด user + settings พร้อมกัน
+        const [uRes, sRes] = await Promise.all([
+          fetch(`${SUPABASE_URL}/rest/v1/users?username=eq.${username}&select=*`, { headers: HEADERS }),
+          fetch(`${SUPABASE_URL}/rest/v1/settings?select=*`, { headers: HEADERS })
+        ]);
+        const [uData, sData] = await Promise.all([uRes.json(), sRes.json()]);
+
+        if (!uData || uData.length === 0) { localStorage.removeItem('mv_current'); location.href = 'demo-login.html'; return; }
+        const user = uData[0];
+
+        // ตรวจสอบ group — เฉพาะกลุ่มทดลอง (odd)
+        if (user.group !== 'odd') {
+          showState('🚫', 'ไม่สามารถเข้าถึงได้', 'Quiz นี้สำหรับกลุ่มทดลองเท่านั้น', null, null);
+          return;
+        }
+
+        // ตรวจสอบ pre_test_done
+        if (!user.pre_test_done) {
+          showState('⚠️', 'ยังไม่ได้ทำ Pre-test', 'กรุณาทำ Pre-test ก่อนเข้า Quiz', null, null);
+          return;
+        }
+
+        // ตรวจสอบว่าทำไปแล้วหรือยัง
+        if (user[DONE_KEYS[SESSION]]) {
+          showDone(user[SCORE_KEYS[SESSION]]);
+          return;
+        }
+
+        // ตรวจสอบวันที่
+        const settings = {};
+        sData.forEach(s => settings[s.key] = s.value);
+        const targetDate = settings[SESSION_DATE_KEYS[SESSION]];
+        const today = todayStr();
+
+        if (targetDate && today < targetDate) {
+          showLocked(targetDate);
+          return;
+        }
+
+        // โหลดข้อสอบ 1 ข้อต่อบท (chapter 1-5)
+        const qRes = await fetch(`${SUPABASE_URL}/rest/v1/questions?select=*&order=chapter.asc,order_num.asc`, { headers: HEADERS });
+        const allQ = await qRes.json();
+
+        // ดึง 1 ข้อต่อ chapter (สุ่มจาก chapter นั้น)
+        const chapters = [1, 2, 3, 4, 5];
+        questions = [];
+        chapters.forEach(ch => {
+          const pool = allQ.filter(q => q.chapter === ch);
+          if (pool.length > 0) {
+            questions.push(pool[Math.floor(Math.random() * pool.length)]);
+          }
+        });
+
+        if (questions.length === 0) {
+          document.getElementById('main').innerHTML = `<div class="loading">❌ ยังไม่มีข้อสอบ กรุณาติดต่อผู้วิจัย</div>`;
+          return;
+        }
+
+        renderQuestion();
+      } catch (e) {
+        document.getElementById('main').innerHTML = `<div class="loading">❌ โหลดไม่สำเร็จ กรุณารีเฟรช</div>`;
+      }
+    }
+
+    function showLocked(targetDate) {
+      const main = document.getElementById('main');
+      main.innerHTML = `
+        <div class="state-card">
+          <div class="state-icon">🔒</div>
+          <div class="state-title" style="color:var(--primary)">ยังไม่ถึงเวลา</div>
+          <div class="state-desc">Quiz ${SESSION_LABELS[SESSION]} จะเปิดให้ทำในวันที่</div>
+          <div class="countdown-box">
+            <div class="label">📅 วันที่เปิด</div>
+            <div class="time">${formatThaiDate(targetDate)}</div>
+          </div>
+          <div class="state-desc" style="font-size:13px;color:#999">รอรับการแจ้งเตือนทาง LINE ครับ</div>
+          <button class="btn-home" onclick="location.href='demo-home.html'">← กลับหน้าหลัก</button>
+        </div>`;
+    }
+
+    function showDone(quizScore) {
+      const next = NEXT_LABELS[SESSION];
+      document.getElementById('main').innerHTML = `
+        <div class="state-card">
+          <div class="state-icon">✅</div>
+          <div class="state-title" style="color:#2e7d32">ทำ Quiz ${SESSION_LABELS[SESSION]} ไปแล้ว</div>
+          <div class="state-desc">คะแนนของคุณ: <strong>${quizScore ?? '—'} / ${questions.length || 5}</strong><br>
+            รอรอบถัดไป: <strong>${next}</strong></div>
+          <div class="countdown-box">
+            <div class="label">⏳ รอบถัดไป</div>
+            <div class="time" style="font-size:16px">${next}</div>
+          </div>
+          <button class="btn-home" onclick="location.href='demo-home.html'">← กลับหน้าหลัก</button>
+        </div>`;
+    }
+
+    function showState(icon, title, desc, date, btn) {
+      document.getElementById('main').innerHTML = `
+        <div class="state-card">
+          <div class="state-icon">${icon}</div>
+          <div class="state-title" style="color:var(--primary)">${title}</div>
+          <div class="state-desc">${desc}</div>
+          <button class="btn-home" onclick="location.href='demo-home.html'">← กลับหน้าหลัก</button>
+        </div>`;
+    }
+
+    function renderQuestion() {
+      const q = questions[current];
+      shuffledChoices = buildChoices(q);
+      answered = false;
+
+      const pct = (current / questions.length) * 100;
+      const chapterLabel = q.chapter ? `บทที่ ${q.chapter}` : '';
+
+      document.getElementById('main').innerHTML = `
+        <div class="progress-wrap">
+          <div class="progress-label">
+            <span>ข้อ ${current + 1} จาก ${questions.length}</span>
+            <span>คะแนน ${score} ข้อ</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+        </div>
+
+        <div class="question-card">
+          <div class="q-label">🔬 Quiz ${SESSION_LABELS[SESSION]}</div>
+          ${chapterLabel ? `<div class="q-chapter">📖 ${chapterLabel}</div>` : ''}
+          <div class="q-text">${q.question_text}</div>
+        </div>
+
+        <div class="choices" id="choices">
+          ${shuffledChoices.map((c, i) => `
+            <button class="choice-btn" id="choice-${i}" onclick="selectAnswer(${i})">
+              <span class="choice-letter">${LETTERS[i]}</span>${c.text}
+            </button>
+          `).join('')}
+        </div>
+
+        <div class="explain-card" id="explain-card"></div>
+      `;
+    }
+
+    function selectAnswer(idx) {
+      if (answered) return;
+      answered = true;
+
+      const chosen = shuffledChoices[idx];
+      const isCorrect = chosen.isCorrect;
+      if (isCorrect) score++;
+
+      shuffledChoices.forEach((c, i) => {
+        const btn = document.getElementById(`choice-${i}`);
+        btn.disabled = true;
+        if (i === idx) btn.classList.add(isCorrect ? 'correct' : 'wrong');
+        else if (c.isCorrect) btn.classList.add('reveal-correct');
+      });
+
+      const card = document.getElementById('explain-card');
+      card.style.display = 'block';
+
+      const sorted = [...shuffledChoices].map((c, i) => ({ ...c, letter: LETTERS[i] }))
+        .sort((a, b) => (b.isCorrect ? 1 : 0) - (a.isCorrect ? 1 : 0));
+
+      const explainItems = sorted.map(c => `
+        <div class="explain-item">
+          <div class="explain-dot ${c.isCorrect ? 'dot-c' : 'dot-w'}">${c.letter}</div>
+          <div class="explain-text"><strong>${c.text}</strong><br>${c.explain}</div>
+        </div>
+      `).join('');
+
+      const isLast = current >= questions.length - 1;
+      card.innerHTML = `
+        <div class="explain-header ${isCorrect ? 'correct' : 'wrong'}">
+          ${isCorrect ? '✅ ถูกต้อง!' : '❌ ผิด'}
+        </div>
+        <div class="explain-subtitle">${isCorrect ? 'เยี่ยมมาก!' : `คำตอบที่ถูกคือ: ${shuffledChoices.find(c => c.isCorrect).text}`}</div>
+        <hr class="explain-divider">
+        <div class="explain-title">🔍 อธิบายแต่ละตัวเลือก</div>
+        ${explainItems}
+        <button class="btn-next" onclick="${isLast ? 'finishQuiz()' : 'nextQuestion()'}">${isLast ? '📊 ดูผลคะแนน' : 'ข้อถัดไป →'}</button>
+      `;
+
+      setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+    }
+
+    function nextQuestion() {
+      current++;
+      renderQuestion();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    async function finishQuiz() {
+      try {
+        const patch = {};
+        patch[DONE_KEYS[SESSION]] = true;
+        patch[SCORE_KEYS[SESSION]] = score;
+        await fetch(`${SUPABASE_URL}/rest/v1/users?username=eq.${username}`, {
+          method: 'PATCH', headers: HEADERS, body: JSON.stringify(patch)
+        });
+        await fetch(`${SUPABASE_URL}/rest/v1/sessions`, {
+          method: 'POST', headers: { ...HEADERS, 'Prefer': 'return=minimal' },
+          body: JSON.stringify({ uid: username, session_number: SESSION, score })
+        });
+      } catch (e) { /* continue */ }
+
+      const pct = Math.round((score / questions.length) * 100);
+      document.getElementById('main').innerHTML = `
+        <div class="result-card">
+          <div style="font-size:56px;margin-bottom:16px">${pct >= 80 ? '🌟' : pct >= 60 ? '👍' : '📚'}</div>
+          <div style="font-size:22px;font-weight:800;color:#1565c0;margin-bottom:8px">Quiz ${SESSION_LABELS[SESSION]} เสร็จสิ้น!</div>
+          <div class="result-score">${score}<span> / ${questions.length}</span></div>
+          <div style="font-size:14px;color:#666;line-height:1.7;margin-bottom:28px">
+            คะแนนของคุณ <strong>${score} ข้อ</strong> จาก ${questions.length} ข้อ (${pct}%)<br>
+            รอบถัดไป: <strong>${NEXT_LABELS[SESSION]}</strong>
+          </div>
+          <button class="btn-home" onclick="location.href='demo-home.html'">← กลับหน้าหลัก</button>
+        </div>`;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    init();
+  </script>
+</body>
+</html>

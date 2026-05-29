@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MedVocab — Pre-test</title>
+  <style>
+    :root { --primary: #003087; --primary-l: #0051CC; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f2f5; min-height: 100vh; }
+    nav {
+      background: linear-gradient(135deg, var(--primary), var(--primary-l));
+      padding: 14px 24px; display: flex; align-items: center;
+      justify-content: space-between; color: #fff;
+      box-shadow: 0 2px 10px rgba(0,48,135,0.3);
+    }
+    nav .brand { font-size: 18px; font-weight: 800; }
+    nav .nav-right { font-size: 13px; opacity: 0.85; }
+
+    .container { max-width: 640px; margin: 28px auto; padding: 0 16px 40px; }
+
+    /* Progress bar */
+    .progress-wrap { background: #fff; border-radius: 14px; padding: 16px 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); margin-bottom: 20px; }
+    .progress-label { display: flex; justify-content: space-between; font-size: 13px; color: #555; margin-bottom: 10px; font-weight: 600; }
+    .progress-bar { height: 8px; background: #e8eaf6; border-radius: 99px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--primary-l)); border-radius: 99px; transition: width 0.4s ease; }
+
+    /* Question card */
+    .question-card { background: #fff; border-radius: 16px; padding: 28px; box-shadow: 0 2px 14px rgba(0,0,0,0.07); margin-bottom: 16px; }
+    .q-label { font-size: 11px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+    .q-text { font-size: 16px; font-weight: 700; color: #1a1a2e; line-height: 1.6; }
+
+    /* Choices */
+    .choices { display: flex; flex-direction: column; gap: 10px; }
+    .choice-btn {
+      width: 100%; padding: 14px 18px; border-radius: 12px; border: 2px solid #e8eaf6;
+      background: #fff; font-size: 14px; font-weight: 600; color: #333; cursor: pointer;
+      text-align: left; transition: all 0.15s; font-family: inherit; line-height: 1.4;
+    }
+    .choice-btn:hover:not(:disabled) { border-color: var(--primary); background: #f0f4ff; color: var(--primary); }
+    .choice-btn.correct { border-color: #2e7d32; background: #e8f5e9; color: #1b5e20; }
+    .choice-btn.wrong { border-color: #c62828; background: #ffebee; color: #b71c1c; }
+    .choice-btn.reveal-correct { border-color: #2e7d32; background: #e8f5e9; color: #1b5e20; }
+    .choice-btn:disabled { cursor: default; }
+    .choice-letter { display: inline-block; width: 24px; height: 24px; border-radius: 50%; background: rgba(0,48,135,0.08);
+      color: var(--primary); font-size: 12px; font-weight: 800; text-align: center; line-height: 24px; margin-right: 10px; flex-shrink: 0; }
+    .choice-btn.correct .choice-letter { background: #2e7d32; color: #fff; }
+    .choice-btn.wrong .choice-letter { background: #c62828; color: #fff; }
+    .choice-btn.reveal-correct .choice-letter { background: #2e7d32; color: #fff; }
+
+    /* Explanation card */
+    .explain-card { background: #fff; border-radius: 16px; padding: 24px; box-shadow: 0 2px 14px rgba(0,0,0,0.07); margin-top: 16px; display: none; }
+    .explain-header { font-size: 18px; font-weight: 800; margin-bottom: 4px; }
+    .explain-header.correct { color: #2e7d32; }
+    .explain-header.wrong { color: #c62828; }
+    .explain-subtitle { font-size: 13px; color: #777; margin-bottom: 20px; }
+    .explain-divider { border: none; border-top: 1px solid #f0f0f0; margin: 16px 0; }
+    .explain-title { font-size: 12px; font-weight: 700; color: #aaa; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+    .explain-item { display: flex; gap: 12px; margin-bottom: 14px; align-items: flex-start; }
+    .explain-dot { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; flex-shrink: 0; margin-top: 1px; }
+    .dot-c { background: #e8f5e9; color: #2e7d32; }
+    .dot-w { background: #fce4ec; color: #c62828; }
+    .explain-text { font-size: 13px; color: #444; line-height: 1.6; }
+    .explain-text strong { color: #222; }
+
+    .btn-next {
+      width: 100%; padding: 14px; margin-top: 20px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-l));
+      color: #fff; border: none; border-radius: 12px; font-size: 15px; font-weight: 700;
+      cursor: pointer; font-family: inherit; transition: all 0.2s;
+      box-shadow: 0 4px 14px rgba(0,48,135,0.3);
+    }
+    .btn-next:hover { filter: brightness(1.08); }
+
+    /* Result card */
+    .result-card { background: #fff; border-radius: 20px; padding: 40px 28px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); text-align: center; }
+    .result-icon { font-size: 56px; margin-bottom: 16px; }
+    .result-title { font-size: 22px; font-weight: 800; color: var(--primary); margin-bottom: 8px; }
+    .result-score { font-size: 48px; font-weight: 800; color: var(--primary); margin: 20px 0 8px; }
+    .result-score span { font-size: 20px; color: #999; }
+    .result-desc { font-size: 14px; color: #666; line-height: 1.7; margin-bottom: 28px; }
+    .btn-home { padding: 13px 32px; background: linear-gradient(135deg, var(--primary), var(--primary-l)); color: #fff; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; box-shadow: 0 4px 14px rgba(0,48,135,0.3); }
+
+    .loading { text-align: center; padding: 60px; color: #aaa; font-size: 15px; }
+    .already-done { background: #fff; border-radius: 16px; padding: 40px; text-align: center; box-shadow: 0 2px 14px rgba(0,0,0,0.07); }
+    .already-done h2 { font-size: 20px; color: var(--primary); margin-bottom: 8px; font-weight: 800; }
+    .already-done p { font-size: 14px; color: #777; }
+  </style>
+</head>
+<body>
+  <nav>
+    <span class="brand">🩺 MedVocab</span>
+    <span class="nav-right">📝 Pre-test · <span id="nav-user">—</span></span>
+  </nav>
+  <div class="container" id="main">
+    <div class="loading">⏳ กำลังโหลดข้อสอบ...</div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://dbchducvmgkkccwemmhl.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_5O2V4_4eY3umLJgQhm6BAQ_0psABX8g';
+    const HEADERS = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' };
+
+    const username = localStorage.getItem('mv_current');
+    if (!username) location.href = 'demo-login.html';
+    document.getElementById('nav-user').textContent = username;
+
+    const LETTERS = ['A', 'B', 'C', 'D', 'E'];
+    let questions = [];
+    let current = 0;
+    let score = 0;
+    let answered = false;
+    let shuffledChoices = [];
+
+    function shuffle(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function buildChoices(q) {
+      const choices = [
+        { text: q.correct_answer, explain: q.explain_correct || '—', isCorrect: true },
+        { text: q.wrong1, explain: q.explain_wrong1 || '—', isCorrect: false },
+        { text: q.wrong2, explain: q.explain_wrong2 || '—', isCorrect: false },
+        { text: q.wrong3, explain: q.explain_wrong3 || '—', isCorrect: false },
+        { text: q.wrong4, explain: q.explain_wrong4 || '—', isCorrect: false },
+      ];
+      return shuffle(choices);
+    }
+
+    async function init() {
+      try {
+        // ตรวจสอบ user
+        const uRes = await fetch(`${SUPABASE_URL}/rest/v1/users?username=eq.${username}&select=pre_test_done,pre_test_score`, { headers: HEADERS });
+        const uData = await uRes.json();
+        if (!uData || uData.length === 0) { localStorage.removeItem('mv_current'); location.href = 'demo-login.html'; return; }
+        const user = uData[0];
+
+        if (user.pre_test_done) {
+          document.getElementById('main').innerHTML = `
+            <div class="already-done">
+              <div style="font-size:48px;margin-bottom:16px">✅</div>
+              <h2>ทำ Pre-test ไปแล้ว</h2>
+              <p style="margin:8px 0 4px">คะแนนของคุณ: <strong>${user.pre_test_score} / 15</strong></p>
+              <p>รอรับการแจ้งเตือนเมื่อถึงรอบถัดไปครับ</p>
+              <button class="btn-home" style="margin-top:24px" onclick="location.href='demo-home.html'">← กลับหน้าหลัก</button>
+            </div>`;
+          return;
+        }
+
+        // โหลดข้อสอบ
+        const qRes = await fetch(`${SUPABASE_URL}/rest/v1/questions?select=*&order=order_num.asc`, { headers: HEADERS });
+        questions = await qRes.json();
+
+        if (!questions || questions.length === 0) {
+          document.getElementById('main').innerHTML = `<div class="loading">❌ ยังไม่มีข้อสอบในระบบ กรุณาติดต่อผู้วิจัย</div>`;
+          return;
+        }
+
+        renderQuestion();
+      } catch (e) {
+        document.getElementById('main').innerHTML = `<div class="loading">❌ โหลดไม่สำเร็จ กรุณารีเฟรช</div>`;
+      }
+    }
+
+    function renderQuestion() {
+      const q = questions[current];
+      shuffledChoices = buildChoices(q);
+      answered = false;
+
+      const pct = (current / questions.length) * 100;
+      document.getElementById('main').innerHTML = `
+        <div class="progress-wrap">
+          <div class="progress-label">
+            <span>ข้อ ${current + 1} จาก ${questions.length}</span>
+            <span>คะแนน ${score} ข้อ</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+        </div>
+
+        <div class="question-card">
+          <div class="q-label">📝 Pre-test · ข้อที่ ${current + 1}</div>
+          <div class="q-text">${q.question_text}</div>
+        </div>
+
+        <div class="choices" id="choices">
+          ${shuffledChoices.map((c, i) => `
+            <button class="choice-btn" id="choice-${i}" onclick="selectAnswer(${i})">
+              <span class="choice-letter">${LETTERS[i]}</span>${c.text}
+            </button>
+          `).join('')}
+        </div>
+
+        <div class="explain-card" id="explain-card"></div>
+      `;
+    }
+
+    function selectAnswer(idx) {
+      if (answered) return;
+      answered = true;
+
+      const chosen = shuffledChoices[idx];
+      const isCorrect = chosen.isCorrect;
+      if (isCorrect) score++;
+
+      // ไฮไลท์ปุ่ม
+      shuffledChoices.forEach((c, i) => {
+        const btn = document.getElementById(`choice-${i}`);
+        btn.disabled = true;
+        if (i === idx) {
+          btn.classList.add(isCorrect ? 'correct' : 'wrong');
+        } else if (c.isCorrect) {
+          btn.classList.add('reveal-correct');
+        }
+      });
+
+      // แสดง explanation
+      const card = document.getElementById('explain-card');
+      card.style.display = 'block';
+
+      // จัด explain items ให้ correct ขึ้นก่อน
+      const sorted = [...shuffledChoices].map((c, i) => ({ ...c, letter: LETTERS[i] }))
+        .sort((a, b) => (b.isCorrect ? 1 : 0) - (a.isCorrect ? 1 : 0));
+
+      const explainItems = sorted.map(c => `
+        <div class="explain-item">
+          <div class="explain-dot ${c.isCorrect ? 'dot-c' : 'dot-w'}">${c.letter}</div>
+          <div class="explain-text"><strong>${c.text}</strong><br>${c.explain}</div>
+        </div>
+      `).join('');
+
+      const isLast = current >= questions.length - 1;
+      card.innerHTML = `
+        <div class="explain-header ${isCorrect ? 'correct' : 'wrong'}">
+          ${isCorrect ? '✅ ถูกต้อง!' : '❌ ผิด'}
+        </div>
+        <div class="explain-subtitle">${isCorrect ? 'เยี่ยมมาก ไปต่อกันเลย' : `คำตอบที่ถูกคือ: ${shuffledChoices.find(c => c.isCorrect).text}`}</div>
+        <hr class="explain-divider">
+        <div class="explain-title">🔍 อธิบายแต่ละตัวเลือก</div>
+        ${explainItems}
+        <button class="btn-next" onclick="${isLast ? 'finishTest()' : 'nextQuestion()'}">${isLast ? '📊 ดูผลคะแนน' : 'ข้อถัดไป →'}</button>
+      `;
+
+      // scroll ลงให้เห็น explanation
+      setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+    }
+
+    function nextQuestion() {
+      current++;
+      renderQuestion();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    async function finishTest() {
+      // บันทึกผล
+      try {
+        await fetch(`${SUPABASE_URL}/rest/v1/users?username=eq.${username}`, {
+          method: 'PATCH',
+          headers: HEADERS,
+          body: JSON.stringify({ pre_test_done: true, pre_test_score: score })
+        });
+        // บันทึก session log
+        await fetch(`${SUPABASE_URL}/rest/v1/sessions`, {
+          method: 'POST',
+          headers: { ...HEADERS, 'Prefer': 'return=minimal' },
+          body: JSON.stringify({ uid: username, session_number: 0, score })
+        });
+      } catch (e) { /* continue anyway */ }
+
+      showResult();
+    }
+
+    function showResult() {
+      const pct = Math.round((score / questions.length) * 100);
+      document.getElementById('main').innerHTML = `
+        <div class="result-card">
+          <div class="result-icon">${pct >= 70 ? '🎉' : pct >= 50 ? '📚' : '💪'}</div>
+          <div class="result-title">Pre-test เสร็จสิ้น!</div>
+          <div class="result-score">${score}<span> / ${questions.length}</span></div>
+          <div class="result-desc">
+            คะแนนของคุณคือ <strong>${score} ข้อ</strong> จาก ${questions.length} ข้อ (${pct}%)<br>
+            ขอบคุณที่เข้าร่วมการวิจัยครับ 🙏<br>
+            รอรับการแจ้งเตือนทาง LINE เมื่อถึงรอบถัดไป
+          </div>
+          <button class="btn-home" onclick="location.href='demo-home.html'">← กลับหน้าหลัก</button>
+        </div>`;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    init();
+  </script>
+</body>
+</html>

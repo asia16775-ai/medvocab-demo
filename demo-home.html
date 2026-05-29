@@ -113,23 +113,88 @@
 
     async function loadUser() {
       try {
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/users?username=eq.${username}&select=*`, { headers: HEADERS });
-        const data = await res.json();
+        const [uRes, sRes] = await Promise.all([
+          fetch(`${SUPABASE_URL}/rest/v1/users?username=eq.${username}&select=*`, { headers: HEADERS }),
+          fetch(`${SUPABASE_URL}/rest/v1/settings?select=*`, { headers: HEADERS })
+        ]);
+        const [data, sData] = await Promise.all([uRes.json(), sRes.json()]);
         if (!data || data.length === 0) { localStorage.removeItem('mv_current'); location.href = 'demo-login.html'; return; }
         const user = data[0];
         const isOdd = user.group === 'odd';
+
+        // parse settings
+        const settings = {};
+        sData.forEach(s => settings[s.key] = s.value);
+
         document.getElementById('group-badge').innerHTML = `<div class="group-badge ${isOdd ? 'badge-odd' : 'badge-even'}">${isOdd ? '🔬 กลุ่มทดลอง (Experimental)' : '📋 กลุ่มควบคุม (Control)'}</div>`;
+
         const as = document.getElementById('action-section');
+        const today = todayStr();
+
+        // ยังไม่ได้ทำ pre-test
         if (!user.pre_test_done) {
           as.innerHTML = `<div class="action-card"><h2>📝 Pre-test รอการทำแบบทดสอบ</h2><p>กรุณาทำแบบทดสอบก่อนการทดลอง 15 ข้อ<br>ใช้เวลาประมาณ 10–15 นาที</p><button class="btn-white" onclick="location.href='demo-pretest.html'">เริ่ม Pre-test →</button></div>`;
-        } else if (isOdd) {
-          as.innerHTML = `<div class="action-card"><h2>✅ Pre-test เสร็จแล้ว</h2><p>ขอบคุณที่เข้าร่วมการวิจัย รอรับการแจ้งเตือนผ่าน LINE เมื่อถึงวันทำแบบทดสอบครั้งถัดไป</p><button class="btn-white" disabled>รอแบบทดสอบครั้งที่ 1 (30 พ.ค.)</button></div>`;
+          return;
+        }
+
+        // post-test เสร็จแล้ว
+        if (user.post_test_done) {
+          as.innerHTML = `<div class="action-card" style="background:linear-gradient(135deg,#1b5e20,#2e7d32)"><h2>🏆 การวิจัยเสร็จสมบูรณ์!</h2><p>ขอบคุณที่เข้าร่วมการวิจัยครับ<br>Pre-test: ${user.pre_test_score ?? '—'}/15 → Post-test: ${user.post_test_score ?? '—'}/15</p><button class="btn-white" onclick="location.href='demo-posttest.html'" style="color:#2e7d32">ดูผลสรุป</button></div>`;
+          return;
+        }
+
+        // post-test เปิดแล้ว
+        const postDate = settings['post_date'];
+        if (postDate && today >= postDate) {
+          as.innerHTML = `<div class="action-card" style="background:linear-gradient(135deg,#1b5e20,#2e7d32)"><h2>🎯 Post-test พร้อมแล้ว!</h2><p>ถึงเวลาทำแบบทดสอบหลังการทดลองแล้วครับ 15 ข้อ<br>วัดความจำระยะยาว</p><button class="btn-white" onclick="location.href='demo-posttest.html'" style="color:#2e7d32">เริ่ม Post-test →</button></div>`;
+          return;
+        }
+
+        // กลุ่มทดลอง — ดู quiz
+        if (isOdd) {
+          const quizSessions = [
+            { num: 1, doneKey: 'quiz1_done', dateKey: 'day1_date', label: 'Quiz Day 1', thaiDate: '30 พ.ค.' },
+            { num: 2, doneKey: 'quiz2_done', dateKey: 'day3_date', label: 'Quiz Day 3', thaiDate: '1 มิ.ย.' },
+            { num: 3, doneKey: 'quiz3_done', dateKey: 'day7_date', label: 'Quiz Day 7', thaiDate: '5 มิ.ย.' },
+          ];
+
+          // หา quiz ที่ยังไม่ได้ทำ
+          let nextQuiz = null;
+          for (const q of quizSessions) {
+            if (!user[q.doneKey]) { nextQuiz = q; break; }
+          }
+
+          if (!nextQuiz) {
+            // ทุก quiz เสร็จแล้ว รอ post-test
+            as.innerHTML = `<div class="action-card"><h2>✅ Quiz ครบทุกรอบแล้ว</h2><p>รอทำ Post-test ในวันที่ ${formatThaiDate(postDate)}</p><button class="btn-white" disabled>รอ Post-test (${formatThaiDate(postDate)})</button></div>`;
+          } else {
+            const qDate = settings[nextQuiz.dateKey];
+            const isOpen = !qDate || today >= qDate;
+            if (isOpen) {
+              as.innerHTML = `<div class="action-card"><h2>🔬 ${nextQuiz.label} พร้อมแล้ว!</h2><p>Quiz 5 ข้อ เฉลยทุกข้อพร้อมคำอธิบาย<br>ใช้เวลาประมาณ 5–10 นาที</p><button class="btn-white" onclick="location.href='demo-quiz.html?s=${nextQuiz.num}'">เริ่ม ${nextQuiz.label} →</button></div>`;
+            } else {
+              as.innerHTML = `<div class="action-card"><h2>✅ Pre-test เสร็จแล้ว</h2><p>รอรับการแจ้งเตือนผ่าน LINE เมื่อถึงวัน ${nextQuiz.label}</p><button class="btn-white" disabled>รอ ${nextQuiz.label} (${nextQuiz.thaiDate})</button></div>`;
+            }
+          }
         } else {
-          as.innerHTML = `<div class="action-card control"><h2>✅ Pre-test เสร็จแล้ว</h2><p>ขอบคุณที่เข้าร่วมการวิจัย กลุ่มควบคุมจะทำแบบทดสอบอีกครั้งในวันที่ 12 มิ.ย. (Day 14)</p><button class="btn-white" disabled>รอ Post-test (12 มิ.ย.)</button></div>`;
+          // กลุ่มควบคุม
+          as.innerHTML = `<div class="action-card control"><h2>✅ Pre-test เสร็จแล้ว</h2><p>ขอบคุณที่เข้าร่วมการวิจัย กลุ่มควบคุมจะทำ Post-test ในวันที่ ${formatThaiDate(postDate)}</p><button class="btn-white" disabled>รอ Post-test (${formatThaiDate(postDate)})</button></div>`;
         }
       } catch (e) {
         document.getElementById('action-section').innerHTML = '<div class="loading">❌ โหลดข้อมูลไม่สำเร็จ กรุณารีเฟรช</div>';
       }
+    }
+
+    function todayStr() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    }
+
+    function formatThaiDate(dateStr) {
+      if (!dateStr) return '—';
+      const months = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+      const [y, m, d] = dateStr.split('-');
+      return `${parseInt(d)} ${months[parseInt(m)-1]} ${parseInt(y)+543}`;
     }
     function logout() { localStorage.removeItem('mv_current'); location.href = 'demo-login.html'; }
     loadUser();

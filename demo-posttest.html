@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MedVocab — Post-test</title>
+  <style>
+    :root { --primary: #003087; --primary-l: #0051CC; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f2f5; min-height: 100vh; }
+    nav {
+      background: linear-gradient(135deg, #1b5e20, #2e7d32);
+      padding: 14px 24px; display: flex; align-items: center;
+      justify-content: space-between; color: #fff;
+      box-shadow: 0 2px 10px rgba(27,94,32,0.3);
+    }
+    nav .brand { font-size: 18px; font-weight: 800; }
+    nav .nav-right { font-size: 13px; opacity: 0.85; }
+
+    .container { max-width: 640px; margin: 28px auto; padding: 0 16px 40px; }
+
+    .progress-wrap { background: #fff; border-radius: 14px; padding: 16px 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); margin-bottom: 20px; }
+    .progress-label { display: flex; justify-content: space-between; font-size: 13px; color: #555; margin-bottom: 10px; font-weight: 600; }
+    .progress-bar { height: 8px; background: #e8f5e9; border-radius: 99px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, #2e7d32, #1b5e20); border-radius: 99px; transition: width 0.4s ease; }
+
+    .question-card { background: #fff; border-radius: 16px; padding: 28px; box-shadow: 0 2px 14px rgba(0,0,0,0.07); margin-bottom: 16px; }
+    .q-label { font-size: 11px; font-weight: 700; color: #2e7d32; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+    .q-text { font-size: 16px; font-weight: 700; color: #1a1a2e; line-height: 1.6; }
+
+    .choices { display: flex; flex-direction: column; gap: 10px; }
+    .choice-btn {
+      width: 100%; padding: 14px 18px; border-radius: 12px; border: 2px solid #e8eaf6;
+      background: #fff; font-size: 14px; font-weight: 600; color: #333; cursor: pointer;
+      text-align: left; transition: all 0.15s; font-family: inherit; line-height: 1.4;
+    }
+    .choice-btn:hover:not(:disabled) { border-color: #2e7d32; background: #e8f5e9; color: #1b5e20; }
+    .choice-btn.correct { border-color: #2e7d32; background: #e8f5e9; color: #1b5e20; }
+    .choice-btn.wrong { border-color: #c62828; background: #ffebee; color: #b71c1c; }
+    .choice-btn.reveal-correct { border-color: #2e7d32; background: #e8f5e9; color: #1b5e20; }
+    .choice-btn:disabled { cursor: default; }
+    .choice-letter { display: inline-block; width: 24px; height: 24px; border-radius: 50%; background: rgba(46,125,50,0.1);
+      color: #2e7d32; font-size: 12px; font-weight: 800; text-align: center; line-height: 24px; margin-right: 10px; flex-shrink: 0; }
+    .choice-btn.correct .choice-letter { background: #2e7d32; color: #fff; }
+    .choice-btn.wrong .choice-letter { background: #c62828; color: #fff; }
+    .choice-btn.reveal-correct .choice-letter { background: #2e7d32; color: #fff; }
+
+    .explain-card { background: #fff; border-radius: 16px; padding: 24px; box-shadow: 0 2px 14px rgba(0,0,0,0.07); margin-top: 16px; display: none; }
+    .explain-header { font-size: 18px; font-weight: 800; margin-bottom: 4px; }
+    .explain-header.correct { color: #2e7d32; }
+    .explain-header.wrong { color: #c62828; }
+    .explain-subtitle { font-size: 13px; color: #777; margin-bottom: 20px; }
+    .explain-divider { border: none; border-top: 1px solid #f0f0f0; margin: 16px 0; }
+    .explain-title { font-size: 12px; font-weight: 700; color: #aaa; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+    .explain-item { display: flex; gap: 12px; margin-bottom: 14px; align-items: flex-start; }
+    .explain-dot { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; flex-shrink: 0; margin-top: 1px; }
+    .dot-c { background: #e8f5e9; color: #2e7d32; }
+    .dot-w { background: #fce4ec; color: #c62828; }
+    .explain-text { font-size: 13px; color: #444; line-height: 1.6; }
+    .explain-text strong { color: #222; }
+
+    .btn-next {
+      width: 100%; padding: 14px; margin-top: 20px;
+      background: linear-gradient(135deg, #2e7d32, #1b5e20);
+      color: #fff; border: none; border-radius: 12px; font-size: 15px; font-weight: 700;
+      cursor: pointer; font-family: inherit; transition: all 0.2s;
+      box-shadow: 0 4px 14px rgba(46,125,50,0.3);
+    }
+    .btn-next:hover { filter: brightness(1.08); }
+
+    .state-card { background: #fff; border-radius: 20px; padding: 40px 28px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); text-align: center; }
+    .countdown-box { background: #e8f5e9; border-radius: 12px; padding: 14px 20px; display: inline-block; margin: 12px auto 20px; }
+    .countdown-box .label { font-size: 11px; color: #2e7d32; font-weight: 700; margin-bottom: 4px; }
+    .countdown-box .time { font-size: 22px; font-weight: 800; color: #1b5e20; }
+    .btn-home { padding: 13px 32px; background: linear-gradient(135deg, #2e7d32, #1b5e20); color: #fff; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; }
+
+    .result-card { background: #fff; border-radius: 20px; padding: 40px 28px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); text-align: center; }
+    .score-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 24px 0; }
+    .score-box { background: #f8f9fa; border-radius: 12px; padding: 16px; }
+    .score-box .label { font-size: 11px; color: #999; font-weight: 700; margin-bottom: 6px; }
+    .score-box .val { font-size: 28px; font-weight: 800; }
+    .score-box.pre .val { color: var(--primary); }
+    .score-box.post .val { color: #2e7d32; }
+    .improvement { font-size: 14px; font-weight: 700; padding: 8px 16px; border-radius: 20px; display: inline-block; margin-bottom: 16px; }
+    .imp-up { background: #e8f5e9; color: #2e7d32; }
+    .imp-same { background: #fff8e1; color: #f57f17; }
+    .imp-down { background: #ffebee; color: #c62828; }
+
+    .loading { text-align: center; padding: 60px; color: #aaa; font-size: 15px; }
+  </style>
+</head>
+<body>
+  <nav>
+    <span class="brand">🩺 MedVocab</span>
+    <span class="nav-right">🎯 Post-test · <span id="nav-user">—</span></span>
+  </nav>
+  <div class="container" id="main">
+    <div class="loading">⏳ กำลังโหลดข้อสอบ...</div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://dbchducvmgkkccwemmhl.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_5O2V4_4eY3umLJgQhm6BAQ_0psABX8g';
+    const HEADERS = { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}`, 'Content-Type': 'application/json' };
+
+    const username = localStorage.getItem('mv_current');
+    if (!username) location.href = 'demo-login.html';
+    document.getElementById('nav-user').textContent = username;
+
+    const LETTERS = ['A', 'B', 'C', 'D', 'E'];
+    let questions = [];
+    let current = 0;
+    let score = 0;
+    let preScore = 0;
+    let answered = false;
+    let shuffledChoices = [];
+
+    function shuffle(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function buildChoices(q) {
+      return shuffle([
+        { text: q.correct_answer, explain: q.explain_correct || '—', isCorrect: true },
+        { text: q.wrong1, explain: q.explain_wrong1 || '—', isCorrect: false },
+        { text: q.wrong2, explain: q.explain_wrong2 || '—', isCorrect: false },
+        { text: q.wrong3, explain: q.explain_wrong3 || '—', isCorrect: false },
+        { text: q.wrong4, explain: q.explain_wrong4 || '—', isCorrect: false },
+      ]);
+    }
+
+    function todayStr() {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    }
+
+    function formatThaiDate(dateStr) {
+      if (!dateStr) return '—';
+      const months = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+      const [y, m, d] = dateStr.split('-');
+      return `${parseInt(d)} ${months[parseInt(m)-1]} ${parseInt(y)+543}`;
+    }
+
+    async function init() {
+      try {
+        const [uRes, sRes] = await Promise.all([
+          fetch(`${SUPABASE_URL}/rest/v1/users?username=eq.${username}&select=*`, { headers: HEADERS }),
+          fetch(`${SUPABASE_URL}/rest/v1/settings?select=*`, { headers: HEADERS })
+        ]);
+        const [uData, sData] = await Promise.all([uRes.json(), sRes.json()]);
+
+        if (!uData || uData.length === 0) { localStorage.removeItem('mv_current'); location.href = 'demo-login.html'; return; }
+        const user = uData[0];
+        preScore = user.pre_test_score ?? 0;
+
+        if (!user.pre_test_done) {
+          document.getElementById('main').innerHTML = `
+            <div class="state-card">
+              <div style="font-size:48px;margin-bottom:16px">⚠️</div>
+              <div style="font-size:20px;font-weight:800;color:var(--primary);margin-bottom:8px">ยังไม่ได้ทำ Pre-test</div>
+              <div style="font-size:14px;color:#666;margin-bottom:24px">กรุณาทำ Pre-test ก่อนครับ</div>
+              <button class="btn-home" onclick="location.href='demo-home.html'">← กลับหน้าหลัก</button>
+            </div>`;
+          return;
+        }
+
+        if (user.post_test_done) {
+          showDone(user.post_test_score, preScore);
+          return;
+        }
+
+        const settings = {};
+        sData.forEach(s => settings[s.key] = s.value);
+        const targetDate = settings['post_date'];
+        const today = todayStr();
+
+        if (targetDate && today < targetDate) {
+          document.getElementById('main').innerHTML = `
+            <div class="state-card">
+              <div style="font-size:56px;margin-bottom:16px">🔒</div>
+              <div style="font-size:20px;font-weight:800;color:var(--primary);margin-bottom:8px">ยังไม่ถึงเวลา</div>
+              <div style="font-size:14px;color:#666;margin-bottom:4px">Post-test จะเปิดในวันที่</div>
+              <div class="countdown-box">
+                <div class="label">📅 วันที่เปิด</div>
+                <div class="time">${formatThaiDate(targetDate)}</div>
+              </div>
+              <div style="font-size:13px;color:#999;margin-bottom:24px">รอรับการแจ้งเตือนทาง LINE ครับ</div>
+              <button class="btn-home" onclick="location.href='demo-home.html'">← กลับหน้าหลัก</button>
+            </div>`;
+          return;
+        }
+
+        const qRes = await fetch(`${SUPABASE_URL}/rest/v1/questions?select=*&order=order_num.asc`, { headers: HEADERS });
+        questions = await qRes.json();
+
+        if (!questions || questions.length === 0) {
+          document.getElementById('main').innerHTML = `<div class="loading">❌ ยังไม่มีข้อสอบ กรุณาติดต่อผู้วิจัย</div>`;
+          return;
+        }
+
+        renderQuestion();
+      } catch (e) {
+        document.getElementById('main').innerHTML = `<div class="loading">❌ โหลดไม่สำเร็จ กรุณารีเฟรช</div>`;
+      }
+    }
+
+    function showDone(postScoreVal, preScoreVal) {
+      document.getElementById('main').innerHTML = `
+        <div class="state-card">
+          <div style="font-size:48px;margin-bottom:16px">✅</div>
+          <div style="font-size:20px;font-weight:800;color:#2e7d32;margin-bottom:8px">ทำ Post-test ไปแล้ว</div>
+          <div style="font-size:14px;color:#666;margin-bottom:24px">
+            Pre-test: <strong>${preScoreVal ?? '—'} / 15</strong> → Post-test: <strong>${postScoreVal ?? '—'} / 15</strong>
+          </div>
+          <button class="btn-home" onclick="location.href='demo-home.html'">← กลับหน้าหลัก</button>
+        </div>`;
+    }
+
+    function renderQuestion() {
+      const q = questions[current];
+      shuffledChoices = buildChoices(q);
+      answered = false;
+
+      const pct = (current / questions.length) * 100;
+      document.getElementById('main').innerHTML = `
+        <div class="progress-wrap">
+          <div class="progress-label">
+            <span>ข้อ ${current + 1} จาก ${questions.length}</span>
+            <span>คะแนน ${score} ข้อ</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+        </div>
+
+        <div class="question-card">
+          <div class="q-label">🎯 Post-test · ข้อที่ ${current + 1}</div>
+          <div class="q-text">${q.question_text}</div>
+        </div>
+
+        <div class="choices" id="choices">
+          ${shuffledChoices.map((c, i) => `
+            <button class="choice-btn" id="choice-${i}" onclick="selectAnswer(${i})">
+              <span class="choice-letter">${LETTERS[i]}</span>${c.text}
+            </button>
+          `).join('')}
+        </div>
+
+        <div class="explain-card" id="explain-card"></div>
+      `;
+    }
+
+    function selectAnswer(idx) {
+      if (answered) return;
+      answered = true;
+
+      const chosen = shuffledChoices[idx];
+      const isCorrect = chosen.isCorrect;
+      if (isCorrect) score++;
+
+      shuffledChoices.forEach((c, i) => {
+        const btn = document.getElementById(`choice-${i}`);
+        btn.disabled = true;
+        if (i === idx) btn.classList.add(isCorrect ? 'correct' : 'wrong');
+        else if (c.isCorrect) btn.classList.add('reveal-correct');
+      });
+
+      const card = document.getElementById('explain-card');
+      card.style.display = 'block';
+
+      const sorted = [...shuffledChoices].map((c, i) => ({ ...c, letter: LETTERS[i] }))
+        .sort((a, b) => (b.isCorrect ? 1 : 0) - (a.isCorrect ? 1 : 0));
+
+      const explainItems = sorted.map(c => `
+        <div class="explain-item">
+          <div class="explain-dot ${c.isCorrect ? 'dot-c' : 'dot-w'}">${c.letter}</div>
+          <div class="explain-text"><strong>${c.text}</strong><br>${c.explain}</div>
+        </div>
+      `).join('');
+
+      const isLast = current >= questions.length - 1;
+      card.innerHTML = `
+        <div class="explain-header ${isCorrect ? 'correct' : 'wrong'}">
+          ${isCorrect ? '✅ ถูกต้อง!' : '❌ ผิด'}
+        </div>
+        <div class="explain-subtitle">${isCorrect ? 'เยี่ยมมาก!' : `คำตอบที่ถูกคือ: ${shuffledChoices.find(c => c.isCorrect).text}`}</div>
+        <hr class="explain-divider">
+        <div class="explain-title">🔍 อธิบายแต่ละตัวเลือก</div>
+        ${explainItems}
+        <button class="btn-next" onclick="${isLast ? 'finishTest()' : 'nextQuestion()'}">
+          ${isLast ? '🏁 ดูผลสรุป' : 'ข้อถัดไป →'}
+        </button>
+      `;
+
+      setTimeout(() => card.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+    }
+
+    function nextQuestion() {
+      current++;
+      renderQuestion();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    async function finishTest() {
+      try {
+        await fetch(`${SUPABASE_URL}/rest/v1/users?username=eq.${username}`, {
+          method: 'PATCH', headers: HEADERS,
+          body: JSON.stringify({ post_test_done: true, post_test_score: score })
+        });
+        await fetch(`${SUPABASE_URL}/rest/v1/sessions`, {
+          method: 'POST', headers: { ...HEADERS, 'Prefer': 'return=minimal' },
+          body: JSON.stringify({ uid: username, session_number: 99, score })
+        });
+      } catch (e) { /* continue */ }
+
+      showResult();
+    }
+
+    function showResult() {
+      const total = questions.length;
+      const postPct = Math.round((score / total) * 100);
+      const diff = score - preScore;
+      const impClass = diff > 0 ? 'imp-up' : diff === 0 ? 'imp-same' : 'imp-down';
+      const impText = diff > 0 ? `↑ +${diff} ข้อ จาก Pre-test` : diff === 0 ? '= เท่าเดิม' : `↓ ${diff} ข้อ จาก Pre-test`;
+
+      document.getElementById('main').innerHTML = `
+        <div class="result-card">
+          <div style="font-size:56px;margin-bottom:12px">${postPct >= 80 ? '🏆' : postPct >= 60 ? '🎉' : '📚'}</div>
+          <div style="font-size:22px;font-weight:800;color:#2e7d32;margin-bottom:4px">Post-test เสร็จสิ้น!</div>
+          <div style="font-size:13px;color:#999;margin-bottom:8px">ขอบคุณที่เข้าร่วมการวิจัยครับ 🙏</div>
+
+          <div class="score-compare">
+            <div class="score-box pre">
+              <div class="label">📝 Pre-test</div>
+              <div class="val">${preScore}<span style="font-size:14px;color:#999"> /${total}</span></div>
+            </div>
+            <div class="score-box post">
+              <div class="label">🎯 Post-test</div>
+              <div class="val">${score}<span style="font-size:14px;color:#999"> /${total}</span></div>
+            </div>
+          </div>
+
+          <div class="improvement ${impClass}">${impText}</div>
+
+          <div style="font-size:13px;color:#777;line-height:1.7;margin-bottom:28px">
+            การวิจัยครั้งนี้เสร็จสมบูรณ์แล้ว<br>
+            ข้อมูลของคุณจะถูกวิเคราะห์เพื่อประโยชน์ทางวิชาการ
+          </div>
+          <button class="btn-home" onclick="location.href='demo-home.html'">← กลับหน้าหลัก</button>
+        </div>`;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    init();
+  </script>
+</body>
+</html>
