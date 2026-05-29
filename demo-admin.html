@@ -267,7 +267,7 @@
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>#</th><th>ประเภท</th><th>คำถาม</th><th>คำตอบถูก</th><th>จัดการ</th></tr></thead>
+            <thead><tr><th>#</th><th>บท</th><th>คำถาม</th><th>คำตอบถูก + ความหมาย</th><th>จัดการ</th></tr></thead>
             <tbody id="q-tbody"><tr><td colspan="5" class="table-empty">⏳ กำลังโหลด...</td></tr></tbody>
           </table>
         </div>
@@ -440,38 +440,74 @@
 
 <!-- MODAL: Question -->
 <div class="modal-overlay" id="q-modal">
-  <div class="modal" style="max-width:560px">
+  <div class="modal" style="max-width:620px">
     <h3 id="q-modal-title">เพิ่มข้อสอบ</h3>
     <input type="hidden" id="q-edit-id">
-    <div class="form-group">
-      <label>ประเภท *</label>
-      <select id="q-type">
-        <option value="pre">📝 Pre-test</option>
-        <option value="post">🎯 Post-test</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label>ลำดับที่</label>
-      <input type="number" id="q-order" placeholder="เช่น 1" min="1">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+      <div class="form-group">
+        <label>บทที่ (Chapter) *</label>
+        <select id="q-chapter">
+          <option value="">— เลือกบท —</option>
+          <option value="1">บทที่ 1</option>
+          <option value="2">บทที่ 2</option>
+          <option value="3">บทที่ 3</option>
+          <option value="4">บทที่ 4</option>
+          <option value="5">บทที่ 5</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Quiz Session *</label>
+        <select id="q-quiz-session">
+          <option value="">— เลือก —</option>
+          <option value="1">🔬 Quiz 1 (Day 1)</option>
+          <option value="2">🔬 Quiz 2 (Day 3)</option>
+          <option value="3">🔬 Quiz 3 (Day 7)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>ลำดับที่</label>
+        <input type="number" id="q-order" placeholder="เช่น 1" min="1">
+      </div>
     </div>
     <div class="form-group">
       <label>คำถาม *</label>
-      <textarea id="q-text" placeholder="Which term refers to..."></textarea>
+      <textarea id="q-text" placeholder="Which term refers to..." style="min-height:70px"></textarea>
     </div>
-    <div class="form-group">
-      <label>คำตอบที่ถูก *</label>
-      <input type="text" id="q-correct" placeholder="เช่น Hypertension">
+
+    <div style="background:#f8f9fa;border-radius:12px;padding:14px;margin-bottom:4px">
+      <div style="font-size:11px;font-weight:700;color:#2e7d32;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">✅ คำตอบที่ถูกต้อง</div>
+      <div class="form-group" style="margin-bottom:8px">
+        <label>คำตอบที่ถูก *</label>
+        <input type="text" id="q-correct" placeholder="เช่น Anemia">
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <label>ความหมาย / คำอธิบาย *</label>
+        <textarea id="q-exp-correct" placeholder="เช่น Anemia = ภาวะที่มีเม็ดเลือดแดงน้อยกว่าปกติ ทำให้เนื้อเยื่อได้รับออกซิเจนไม่เพียงพอ" style="min-height:60px"></textarea>
+      </div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-      <div class="form-group"><label>ตัวเลือกผิดที่ 1 *</label><input type="text" id="q-w1" placeholder="เช่น Hypotension"></div>
-      <div class="form-group"><label>ตัวเลือกผิดที่ 2 *</label><input type="text" id="q-w2" placeholder="เช่น Tachycardia"></div>
-      <div class="form-group"><label>ตัวเลือกผิดที่ 3 *</label><input type="text" id="q-w3" placeholder="เช่น Bradycardia"></div>
-      <div class="form-group"><label>ตัวเลือกผิดที่ 4 *</label><input type="text" id="q-w4" placeholder="เช่น Arrhythmia"></div>
+
+    <div style="background:#fff5f5;border-radius:12px;padding:14px;margin-top:10px">
+      <div style="font-size:11px;font-weight:700;color:#c62828;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">❌ ตัวเลือกผิด (4 ตัวเลือก)</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <div class="form-group" style="margin-bottom:6px"><label>ตัวเลือกผิดที่ 1 *</label><input type="text" id="q-w1" placeholder="เช่น Leukemia"></div>
+          <div class="form-group"><label>ความหมาย *</label><textarea id="q-exp-w1" placeholder="เช่น Leukemia = มะเร็งเม็ดเลือดขาว ไม่ใช่ภาวะซีด" style="min-height:60px"></textarea></div>
+        </div>
+        <div>
+          <div class="form-group" style="margin-bottom:6px"><label>ตัวเลือกผิดที่ 2 *</label><input type="text" id="q-w2" placeholder="เช่น Thrombosis"></div>
+          <div class="form-group"><label>ความหมาย *</label><textarea id="q-exp-w2" placeholder="เช่น Thrombosis = การเกิดลิ่มเลือด" style="min-height:60px"></textarea></div>
+        </div>
+        <div>
+          <div class="form-group" style="margin-bottom:6px"><label>ตัวเลือกผิดที่ 3 *</label><input type="text" id="q-w3" placeholder="เช่น Polycythemia"></div>
+          <div class="form-group"><label>ความหมาย *</label><textarea id="q-exp-w3" placeholder="เช่น Polycythemia = ภาวะเม็ดเลือดแดงมากเกิน" style="min-height:60px"></textarea></div>
+        </div>
+        <div>
+          <div class="form-group" style="margin-bottom:6px"><label>ตัวเลือกผิดที่ 4 *</label><input type="text" id="q-w4" placeholder="เช่น Hemolysis"></div>
+          <div class="form-group"><label>ความหมาย *</label><textarea id="q-exp-w4" placeholder="เช่น Hemolysis = การแตกของเม็ดเลือดแดง" style="min-height:60px"></textarea></div>
+        </div>
+      </div>
     </div>
-    <div class="form-group">
-      <label>คำอธิบาย (แสดงหลังตอบ)</label>
-      <textarea id="q-exp" placeholder="อธิบายคำตอบที่ถูกต้อง..."></textarea>
-    </div>
+
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="closeModal('q-modal')">ยกเลิก</button>
       <button class="btn btn-primary" onclick="saveQuestion()">บันทึก</button>
@@ -618,57 +654,86 @@ function renderQTable() {
   const qs = qFilter==='all' ? allQuestions : allQuestions.filter(q=>q.test_type===qFilter);
   const tbody = document.getElementById('q-tbody');
   if (!qs.length) { tbody.innerHTML = '<tr><td colspan="5" class="table-empty">ยังไม่มีข้อสอบ กดเพิ่มข้อสอบได้เลย</td></tr>'; return; }
-  tbody.innerHTML = qs.map(q => `
+  tbody.innerHTML = qs.map(q => {
+    const hasExplain = q.explain_correct || q.explain_wrong1;
+    const explainBadge = hasExplain
+      ? `<span style="background:#e8f5e9;color:#2e7d32;font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px;margin-left:6px">✅ มีเฉลย</span>`
+      : `<span style="background:#fff3e0;color:#ef6c00;font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px;margin-left:6px">⚠️ ยังไม่มีเฉลย</span>`;
+    return `
     <tr>
       <td style="font-weight:700;color:var(--text-3)">${q.order_num || '—'}</td>
-      <td><span class="chip ${q.test_type==='pre' ? 'chip-odd' : 'chip-even'}">${q.test_type==='pre' ? '📝 Pre' : '🎯 Post'}</span></td>
-      <td style="max-width:300px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${q.question_text || '—'}</td>
-      <td style="color:var(--success);font-weight:600">${q.correct_answer || '—'}</td>
+      <td style="text-align:center">
+        <span style="background:#e3f2fd;color:#1565c0;font-size:11px;font-weight:700;padding:3px 8px;border-radius:99px;display:block;margin-bottom:3px">บท ${q.chapter || '?'}</span>
+        <span style="background:${q.quiz_session===1?'#f3e5f5':q.quiz_session===2?'#e3f2fd':q.quiz_session===3?'#e8f5e9':'#f5f5f5'};color:${q.quiz_session===1?'#7b1fa2':q.quiz_session===2?'#1565c0':q.quiz_session===3?'#2e7d32':'#999'};font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px">
+          ${q.quiz_session ? `Q${q.quiz_session}` : '—'}
+        </span>
+      </td>
+      <td style="max-width:280px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${q.question_text || '—'}</td>
+      <td>
+        <span style="color:var(--success);font-weight:700">${q.correct_answer || '—'}</span>
+        ${explainBadge}
+        ${q.explain_correct ? `<div style="font-size:11px;color:#777;margin-top:3px;max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${q.explain_correct}</div>` : ''}
+      </td>
       <td style="display:flex;gap:6px">
         <button class="btn btn-ghost btn-sm" onclick="editQuestion(${q.id})">✏️ แก้ไข</button>
         <button class="btn btn-danger btn-sm" onclick="deleteQuestion(${q.id})">🗑️</button>
       </td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
 }
 function openQModal(id) {
   document.getElementById('q-edit-id').value = '';
   document.getElementById('q-modal-title').textContent = 'เพิ่มข้อสอบ';
-  ['q-type','q-order','q-text','q-correct','q-w1','q-w2','q-w3','q-w4','q-exp'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el.tagName==='SELECT') el.value = 'pre'; else el.value = '';
+  ['q-chapter','q-quiz-session','q-order','q-text','q-correct','q-exp-correct',
+   'q-w1','q-exp-w1','q-w2','q-exp-w2','q-w3','q-exp-w3','q-w4','q-exp-w4'].forEach(fid => {
+    const el = document.getElementById(fid);
+    if (!el) return;
+    if (el.tagName==='SELECT') el.value = ''; else el.value = '';
   });
   document.getElementById('q-modal').classList.add('show');
 }
 function editQuestion(id) {
   const q = allQuestions.find(q=>q.id===id);
   if (!q) return;
-  document.getElementById('q-edit-id').value  = id;
-  document.getElementById('q-modal-title').textContent = 'แก้ไขข้อสอบ';
-  document.getElementById('q-type').value    = q.test_type || 'pre';
-  document.getElementById('q-order').value   = q.order_num || '';
-  document.getElementById('q-text').value    = q.question_text || '';
-  document.getElementById('q-correct').value = q.correct_answer || '';
-  document.getElementById('q-w1').value      = q.wrong1 || '';
-  document.getElementById('q-w2').value      = q.wrong2 || '';
-  document.getElementById('q-w3').value      = q.wrong3 || '';
-  document.getElementById('q-w4').value      = q.wrong4 || '';
-  document.getElementById('q-exp').value     = q.explanation || '';
+  document.getElementById('q-edit-id').value            = id;
+  document.getElementById('q-modal-title').textContent  = 'แก้ไขข้อสอบ';
+  document.getElementById('q-chapter').value            = q.chapter || '';
+  document.getElementById('q-quiz-session').value       = q.quiz_session || '';
+  document.getElementById('q-order').value         = q.order_num || '';
+  document.getElementById('q-text').value          = q.question_text || '';
+  document.getElementById('q-correct').value       = q.correct_answer || '';
+  document.getElementById('q-exp-correct').value   = q.explain_correct || '';
+  document.getElementById('q-w1').value            = q.wrong1 || '';
+  document.getElementById('q-exp-w1').value        = q.explain_wrong1 || '';
+  document.getElementById('q-w2').value            = q.wrong2 || '';
+  document.getElementById('q-exp-w2').value        = q.explain_wrong2 || '';
+  document.getElementById('q-w3').value            = q.wrong3 || '';
+  document.getElementById('q-exp-w3').value        = q.explain_wrong3 || '';
+  document.getElementById('q-w4').value            = q.wrong4 || '';
+  document.getElementById('q-exp-w4').value        = q.explain_wrong4 || '';
   document.getElementById('q-modal').classList.add('show');
 }
 async function saveQuestion() {
   const editId = document.getElementById('q-edit-id').value;
   const payload = {
-    test_type:      document.getElementById('q-type').value,
-    order_num:      parseInt(document.getElementById('q-order').value) || null,
-    question_text:  document.getElementById('q-text').value.trim(),
-    correct_answer: document.getElementById('q-correct').value.trim(),
-    wrong1:         document.getElementById('q-w1').value.trim(),
-    wrong2:         document.getElementById('q-w2').value.trim(),
-    wrong3:         document.getElementById('q-w3').value.trim(),
-    wrong4:         document.getElementById('q-w4').value.trim(),
-    explanation:    document.getElementById('q-exp').value.trim(),
+    chapter:         parseInt(document.getElementById('q-chapter').value) || null,
+    quiz_session:    parseInt(document.getElementById('q-quiz-session').value) || null,
+    order_num:       parseInt(document.getElementById('q-order').value) || null,
+    question_text:   document.getElementById('q-text').value.trim(),
+    correct_answer:  document.getElementById('q-correct').value.trim(),
+    explain_correct: document.getElementById('q-exp-correct').value.trim(),
+    wrong1:          document.getElementById('q-w1').value.trim(),
+    explain_wrong1:  document.getElementById('q-exp-w1').value.trim(),
+    wrong2:          document.getElementById('q-w2').value.trim(),
+    explain_wrong2:  document.getElementById('q-exp-w2').value.trim(),
+    wrong3:          document.getElementById('q-w3').value.trim(),
+    explain_wrong3:  document.getElementById('q-exp-w3').value.trim(),
+    wrong4:          document.getElementById('q-w4').value.trim(),
+    explain_wrong4:  document.getElementById('q-exp-w4').value.trim(),
   };
   if (!payload.question_text || !payload.correct_answer) { showToast('⚠️ กรุณากรอกคำถามและคำตอบ'); return; }
+  if (!payload.chapter) { showToast('⚠️ กรุณาเลือกบทที่'); return; }
+  if (!payload.quiz_session) { showToast('⚠️ กรุณาเลือก Quiz Session (1/2/3)'); return; }
   if (editId) {
     await sb.from('questions').update(payload).eq('id', editId);
     showToast('✅ แก้ไขข้อสอบแล้ว');

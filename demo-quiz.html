@@ -196,19 +196,12 @@
           return;
         }
 
-        // โหลดข้อสอบ 1 ข้อต่อบท (chapter 1-5)
-        const qRes = await fetch(`${SUPABASE_URL}/rest/v1/questions?select=*&order=chapter.asc,order_num.asc`, { headers: HEADERS });
-        const allQ = await qRes.json();
-
-        // ดึง 1 ข้อต่อ chapter (สุ่มจาก chapter นั้น)
-        const chapters = [1, 2, 3, 4, 5];
-        questions = [];
-        chapters.forEach(ch => {
-          const pool = allQ.filter(q => q.chapter === ch);
-          if (pool.length > 0) {
-            questions.push(pool[Math.floor(Math.random() * pool.length)]);
-          }
-        });
+        // โหลดข้อสอบตาม quiz_session และ chapter
+        const qRes = await fetch(
+          `${SUPABASE_URL}/rest/v1/questions?quiz_session=eq.${SESSION}&select=*&order=chapter.asc`,
+          { headers: HEADERS }
+        );
+        questions = await qRes.json();
 
         if (questions.length === 0) {
           document.getElementById('main').innerHTML = `<div class="loading">❌ ยังไม่มีข้อสอบ กรุณาติดต่อผู้วิจัย</div>`;
