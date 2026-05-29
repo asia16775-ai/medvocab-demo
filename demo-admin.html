@@ -292,8 +292,8 @@
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Username</th><th>กลุ่ม</th><th>ลงทะเบียน</th><th>Pre-test</th><th>คะแนน Pre</th><th>Post-test</th><th>คะแนน Post</th><th>จัดการ</th></tr></thead>
-            <tbody id="s-tbody"><tr><td colspan="8" class="table-empty">⏳ กำลังโหลด...</td></tr></tbody>
+            <thead><tr><th>Username</th><th>กลุ่ม</th><th>ลงทะเบียน</th><th>Pre-test</th><th>คะแนน Pre</th><th>Quiz 1</th><th>Quiz 2</th><th>Quiz 3</th><th>Post-test</th><th>คะแนน Post</th><th>จัดการ</th></tr></thead>
+            <tbody id="s-tbody"><tr><td colspan="11" class="table-empty">⏳ กำลังโหลด...</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -392,7 +392,10 @@
             <label style="font-size:12px;font-weight:600;color:var(--text-3);display:block;margin-bottom:5px">จำลองเป็น</label>
             <select id="test-mode-sel" style="padding:10px 14px;border:1.5px solid rgba(60,60,67,0.2);border-radius:10px;font-size:14px;outline:none;background:rgba(255,255,255,0.7);font-family:inherit">
               <option value="pre">✅ Pre-test เสร็จแล้ว</option>
-              <option value="post">✅ Post-test เสร็จแล้ว</option>
+              <option value="quiz1">🔬 Quiz Day 1 เสร็จแล้ว</option>
+              <option value="quiz2">🔬 Quiz Day 3 เสร็จแล้ว</option>
+              <option value="quiz3">🔬 Quiz Day 7 เสร็จแล้ว</option>
+              <option value="post">🎯 Post-test เสร็จแล้ว</option>
               <option value="reset">↩ Reset ทั้งหมด</option>
             </select>
           </div>
@@ -560,10 +563,13 @@ async function loadDashboard() {
   const expUsers = allUsers.filter(u=>u.group==='odd');
   const ctrlUsers = allUsers.filter(u=>u.group==='even');
   document.getElementById('exp-progress').innerHTML =
-    progHTML('Pre-test', expUsers.filter(u=>u.pre_test_done).length, expUsers.length, 'linear-gradient(90deg,var(--primary),var(--primary-l))') +
+    progHTML('Pre-test',  expUsers.filter(u=>u.pre_test_done).length,  expUsers.length, 'linear-gradient(90deg,var(--primary),var(--primary-l))') +
+    progHTML('Quiz Day 1',expUsers.filter(u=>u.quiz1_done).length,     expUsers.length, 'linear-gradient(90deg,#7B1FA2,#AB47BC)') +
+    progHTML('Quiz Day 3',expUsers.filter(u=>u.quiz2_done).length,     expUsers.length, 'linear-gradient(90deg,#0277BD,#29B6F6)') +
+    progHTML('Quiz Day 7',expUsers.filter(u=>u.quiz3_done).length,     expUsers.length, 'linear-gradient(90deg,#00796B,#26A69A)') +
     progHTML('Post-test', expUsers.filter(u=>u.post_test_done).length, expUsers.length, 'linear-gradient(90deg,var(--success),#28a745)');
   document.getElementById('ctrl-progress').innerHTML =
-    progHTML('Pre-test', ctrlUsers.filter(u=>u.pre_test_done).length, ctrlUsers.length, 'linear-gradient(90deg,#C9A84C,#E8C96A)') +
+    progHTML('Pre-test',  ctrlUsers.filter(u=>u.pre_test_done).length,  ctrlUsers.length, 'linear-gradient(90deg,#C9A84C,#E8C96A)') +
     progHTML('Post-test', ctrlUsers.filter(u=>u.post_test_done).length, ctrlUsers.length, 'linear-gradient(90deg,var(--success),#28a745)');
 
   renderScoreChart(allUsers);
@@ -698,18 +704,29 @@ function renderSTable() {
   if (sFilter==='pre_done')    users = allUsers.filter(u=>u.pre_test_done);
   if (sFilter==='pre_pending') users = allUsers.filter(u=>!u.pre_test_done);
   const tbody = document.getElementById('s-tbody');
-  if (!users.length) { tbody.innerHTML = '<tr><td colspan="8" class="table-empty">ไม่มีข้อมูล</td></tr>'; return; }
+  if (!users.length) { tbody.innerHTML = '<tr><td colspan="11" class="table-empty">ไม่มีข้อมูล</td></tr>'; return; }
   tbody.innerHTML = users.map(u => {
     const d = new Date(u.registered_at);
     const dateStr = `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()+543}`;
     const preS  = u.pre_test_score  != null ? `<span class="${u.pre_test_score>=10?'score-high':u.pre_test_score>=7?'score-mid':'score-low'}">${u.pre_test_score}/15</span>` : '<span style="color:#ccc">—</span>';
     const postS = u.post_test_score != null ? `<span class="${u.post_test_score>=10?'score-high':u.post_test_score>=7?'score-mid':'score-low'}">${u.post_test_score}/15</span>` : '<span style="color:#ccc">—</span>';
+
+    const quizCell = (done, score, isOdd) => {
+      if (!isOdd) return '<td style="color:#ddd;text-align:center;font-size:11px">—</td>';
+      if (done) return `<td><span class="dot-badge"><span class="dot dot-green"></span>${score != null ? score+'/5' : 'เสร็จ'}</span></td>`;
+      return `<td><span class="dot-badge"><span class="dot dot-grey"></span>รอ</span></td>`;
+    };
+    const isOdd = u.group === 'odd';
+
     return `<tr>
       <td><code style="font-weight:800;color:var(--primary);background:rgba(0,48,135,0.08);padding:2px 8px;border-radius:6px">${u.username}</code></td>
-      <td><span class="chip ${u.group==='odd'?'chip-odd':'chip-even'}">${u.group==='odd'?'🔬 ทดลอง':'📋 ควบคุม'}</span></td>
+      <td><span class="chip ${isOdd?'chip-odd':'chip-even'}">${isOdd?'🔬 ทดลอง':'📋 ควบคุม'}</span></td>
       <td style="color:var(--text-3);font-size:12px">${dateStr}</td>
       <td><span class="dot-badge"><span class="dot ${u.pre_test_done?'dot-green':'dot-grey'}"></span>${u.pre_test_done?'เสร็จ':'รอ'}</span></td>
       <td>${preS}</td>
+      ${quizCell(u.quiz1_done, u.quiz1_score, isOdd)}
+      ${quizCell(u.quiz2_done, u.quiz2_score, isOdd)}
+      ${quizCell(u.quiz3_done, u.quiz3_score, isOdd)}
       <td><span class="dot-badge"><span class="dot ${u.post_test_done?'dot-green':'dot-grey'}"></span>${u.post_test_done?'เสร็จ':'รอ'}</span></td>
       <td>${postS}</td>
       <td style="display:flex;gap:4px;flex-wrap:wrap">
@@ -789,8 +806,11 @@ async function setTestMode() {
   if (!uid) { showToast('⚠️ กรุณากรอก Username'); return; }
   let patch = {};
   if (mode==='pre')   patch = { pre_test_done: true };
-  if (mode==='post')  patch = { pre_test_done: true, post_test_done: true };
-  if (mode==='reset') patch = { pre_test_done: false, post_test_done: false, pre_test_score: null, post_test_score: null };
+  if (mode==='quiz1') patch = { pre_test_done: true, quiz1_done: true };
+  if (mode==='quiz2') patch = { pre_test_done: true, quiz1_done: true, quiz2_done: true };
+  if (mode==='quiz3') patch = { pre_test_done: true, quiz1_done: true, quiz2_done: true, quiz3_done: true };
+  if (mode==='post')  patch = { pre_test_done: true, quiz1_done: true, quiz2_done: true, quiz3_done: true, post_test_done: true };
+  if (mode==='reset') patch = { pre_test_done: false, post_test_done: false, pre_test_score: null, post_test_score: null, quiz1_done:false, quiz1_score:null, quiz2_done:false, quiz2_score:null, quiz3_done:false, quiz3_score:null };
   const { error } = await sb.from('users').update(patch).eq('username', uid);
   if (error) { showToast('❌ ไม่พบ username นี้'); return; }
   showToast(`✅ อัปเดต ${uid} → ${mode} แล้ว`); loadStudents(); loadDashboard();
@@ -800,7 +820,7 @@ async function setTestMode() {
 async function resetOneStudent() {
   const uid = document.getElementById('reset-uid-input').value.trim();
   if (!uid) { showToast('⚠️ กรุณากรอก username'); return; }
-  await sb.from('users').update({ pre_test_done:false, post_test_done:false, pre_test_score:null, post_test_score:null }).eq('username', uid);
+  await sb.from('users').update({ pre_test_done:false, post_test_done:false, pre_test_score:null, post_test_score:null, quiz1_done:false, quiz1_score:null, quiz2_done:false, quiz2_score:null, quiz3_done:false, quiz3_score:null }).eq('username', uid);
   showToast(`✅ Reset ${uid} แล้ว`); loadStudents();
 }
 let confirmCallback = null;
@@ -818,7 +838,7 @@ function confirmAction(type) {
   confirmCallback = async () => {
     closeModal('confirm-modal');
     if (type==='resetAll') {
-      await sb.from('users').update({ pre_test_done:false, post_test_done:false, pre_test_score:null, post_test_score:null }).neq('username','__none__');
+      await sb.from('users').update({ pre_test_done:false, post_test_done:false, pre_test_score:null, post_test_score:null, quiz1_done:false, quiz1_score:null, quiz2_done:false, quiz2_score:null, quiz3_done:false, quiz3_score:null }).neq('username','__none__');
       showToast('✅ Reset ทุกคนแล้ว'); loadStudents(); loadDashboard();
     } else if (type==='clearLogs') {
       await sb.from('sessions').delete().neq('id', 0);
@@ -839,8 +859,8 @@ function exportCSV(type) {
   if (type==='pre')  users = allUsers.filter(u=>u.pre_test_done);
   if (type==='post') users = allUsers.filter(u=>u.post_test_done);
   if (!users.length) { showToast('ไม่มีข้อมูลให้ export'); return; }
-  const header = ['username','group','registered_at','pre_test_done','pre_test_score','post_test_done','post_test_score'];
-  const rows   = users.map(u => [u.username, u.group, u.registered_at, u.pre_test_done?1:0, u.pre_test_score??'', u.post_test_done?1:0, u.post_test_score??'']);
+  const header = ['username','group','registered_at','pre_test_done','pre_test_score','quiz1_done','quiz1_score','quiz2_done','quiz2_score','quiz3_done','quiz3_score','post_test_done','post_test_score'];
+  const rows   = users.map(u => [u.username, u.group, u.registered_at, u.pre_test_done?1:0, u.pre_test_score??'', u.quiz1_done?1:0, u.quiz1_score??'', u.quiz2_done?1:0, u.quiz2_score??'', u.quiz3_done?1:0, u.quiz3_score??'', u.post_test_done?1:0, u.post_test_score??'']);
   const csv = [header,...rows].map(r=>r.join(',')).join('\n');
   const blob = new Blob(['﻿'+csv], {type:'text/csv;charset=utf-8;'});
   const a = document.createElement('a');
