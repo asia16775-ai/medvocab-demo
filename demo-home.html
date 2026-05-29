@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MedVocab — หน้าหลัก</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;
+      background: #f0f2f5;
+      min-height: 100vh;
+    }
+    nav {
+      background: #1a237e;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: #fff;
+    }
+    nav .brand { font-size: 18px; font-weight: 700; letter-spacing: 1px; }
+    nav .user-info { font-size: 13px; opacity: 0.8; }
+    nav .logout { font-size: 12px; cursor: pointer; opacity: 0.7; }
+    nav .logout:hover { opacity: 1; text-decoration: underline; }
+
+    .container { max-width: 600px; margin: 32px auto; padding: 0 16px; }
+
+    .group-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 20px;
+    }
+    .badge-odd { background: #e8eaf6; color: #1a237e; }
+    .badge-even { background: #e3f2fd; color: #0d47a1; }
+
+    .timeline {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      margin-bottom: 20px;
+    }
+    .timeline h3 { font-size: 14px; color: #888; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .step { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 12px; }
+    .step:last-child { margin-bottom: 0; }
+    .step-dot {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+    .dot-done { background: #e8f5e9; }
+    .dot-active { background: #1a237e; color: #fff; }
+    .dot-future { background: #f5f5f5; color: #bbb; }
+    .step-title { font-size: 14px; font-weight: 600; color: #333; }
+    .step-date { font-size: 12px; color: #999; margin-top: 2px; }
+    .step-desc { font-size: 12px; color: #777; margin-top: 3px; }
+
+    .action-card {
+      background: #1a237e;
+      border-radius: 12px;
+      padding: 24px;
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(26,35,126,0.3);
+    }
+    .action-card.control { background: linear-gradient(135deg, #1565c0, #0d47a1); }
+    .action-card h2 { font-size: 18px; margin-bottom: 6px; }
+    .action-card p { font-size: 13px; opacity: 0.85; margin-bottom: 20px; line-height: 1.5; }
+    .btn-white {
+      background: #fff;
+      color: #1a237e;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .btn-white:hover { opacity: 0.9; }
+    .btn-white:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: #90a4ae;
+      font-size: 14px;
+    }
+
+    .info-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 16px 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      font-size: 13px;
+      color: #555;
+      line-height: 1.6;
+      margin-top: 16px;
+    }
+    .info-card strong { color: #1a237e; }
+  </style>
+</head>
+<body>
+  <nav>
+    <span class="brand">🩺 MedVocab</span>
+    <span class="user-info">รหัส: <span id="nav-uid">----</span></span>
+    <span class="logout" onclick="logout()">ออกจากระบบ</span>
+  </nav>
+
+  <div class="container">
+    <div id="group-badge"></div>
+
+    <div class="timeline">
+      <h3>📅 ตารางกิจกรรม</h3>
+      <div class="step">
+        <div class="step-dot dot-active">✓</div>
+        <div class="step-info">
+          <div class="step-title">Pre-test (ก่อนการทดลอง)</div>
+          <div class="step-date">Day 0 · 29 พ.ค. 2569</div>
+          <div class="step-desc">ทำแบบทดสอบ 15 ข้อ หลังสอบปลายภาควิชาโลหิตวิทยา</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-dot dot-future">1</div>
+        <div class="step-info">
+          <div class="step-title">แบบทดสอบครั้งที่ 1</div>
+          <div class="step-date">Day 1 · 30 พ.ค. 2569</div>
+          <div class="step-desc">เฉพาะกลุ่มทดลอง · 5 ข้อ</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-dot dot-future">2</div>
+        <div class="step-info">
+          <div class="step-title">แบบทดสอบครั้งที่ 2</div>
+          <div class="step-date">Day 3 · 1 มิ.ย. 2569</div>
+          <div class="step-desc">เฉพาะกลุ่มทดลอง · 5 ข้อ</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-dot dot-future">3</div>
+        <div class="step-info">
+          <div class="step-title">แบบทดสอบครั้งที่ 3</div>
+          <div class="step-date">Day 7 · 5 มิ.ย. 2569</div>
+          <div class="step-desc">เฉพาะกลุ่มทดลอง · 5 ข้อ</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-dot dot-future">🎯</div>
+        <div class="step-info">
+          <div class="step-title">Post-test (หลังการทดลอง)</div>
+          <div class="step-date">Day 14 · 12 มิ.ย. 2569</div>
+          <div class="step-desc">ทุกคน · 15 ข้อ · วัดความจำระยะยาว</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="action-section"><div class="loading">⏳ กำลังโหลด...</div></div>
+
+    <div class="info-card">
+      <strong>🔒 นโยบายความเป็นส่วนตัว</strong><br>
+      ระบบจัดเก็บเฉพาะรหัส 3 หลักและผลคะแนนเท่านั้น ไม่มีการบันทึกชื่อ นามสกุล หรือรหัสนิสิต
+      ข้อมูลทั้งหมดจะถูกนำเสนอในภาพรวมเพื่อวัตถุประสงค์ทางวิชาการเท่านั้น
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://dbchducvmgkkccwemmhl.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_5O2V4_4eY3umLJgQhm6BAQ_0psABX8g';
+    const HEADERS = {
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${SUPABASE_KEY}`
+    };
+
+    const uid = localStorage.getItem('mv_current');
+    if (!uid) { location.href = 'demo-login.html'; }
+
+    document.getElementById('nav-uid').textContent = '**' + uid;
+
+    async function loadUser() {
+      try {
+        const res = await fetch(
+          `${SUPABASE_URL}/rest/v1/users?uid=eq.${uid}&select=*`,
+          { headers: HEADERS }
+        );
+        const data = await res.json();
+
+        if (!data || data.length === 0) {
+          localStorage.removeItem('mv_current');
+          location.href = 'demo-login.html';
+          return;
+        }
+
+        const user = data[0];
+        const isOdd = user.group === 'odd';
+
+        // Group badge
+        document.getElementById('group-badge').innerHTML = `
+          <div class="group-badge ${isOdd ? 'badge-odd' : 'badge-even'}">
+            ${isOdd ? '🔬 กลุ่มทดลอง (Experimental)' : '📋 กลุ่มควบคุม (Control)'}
+          </div>`;
+
+        // Action section
+        const as = document.getElementById('action-section');
+        if (!user.pre_test_done) {
+          as.innerHTML = `
+            <div class="action-card">
+              <h2>📝 Pre-test รอการทำแบบทดสอบ</h2>
+              <p>กรุณาทำแบบทดสอบก่อนการทดลอง 15 ข้อ เพื่อเก็บข้อมูลพื้นฐานก่อนเริ่มการวิจัย<br>ใช้เวลาประมาณ 10–15 นาที</p>
+              <button class="btn-white" onclick="location.href='demo-pretest.html'">เริ่ม Pre-test →</button>
+            </div>`;
+        } else if (isOdd) {
+          as.innerHTML = `
+            <div class="action-card">
+              <h2>✅ Pre-test เสร็จแล้ว</h2>
+              <p>ขอบคุณที่เข้าร่วมการวิจัย ระบบจะส่งการแจ้งเตือนผ่าน LINE เมื่อถึงวันทำแบบทดสอบครั้งถัดไป</p>
+              <button class="btn-white" disabled>รอแบบทดสอบครั้งที่ 1 (30 พ.ค.)</button>
+            </div>`;
+        } else {
+          as.innerHTML = `
+            <div class="action-card control">
+              <h2>✅ Pre-test เสร็จแล้ว</h2>
+              <p>ขอบคุณที่เข้าร่วมการวิจัย กลุ่มควบคุมจะทำแบบทดสอบอีกครั้งในวันที่ 12 มิ.ย. (Day 14) เท่านั้น</p>
+              <button class="btn-white" disabled>รอ Post-test (12 มิ.ย.)</button>
+            </div>`;
+        }
+
+      } catch (e) {
+        document.getElementById('action-section').innerHTML =
+          '<div class="loading">❌ โหลดข้อมูลไม่สำเร็จ กรุณารีเฟรชหน้า</div>';
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem('mv_current');
+      location.href = 'demo-login.html';
+    }
+
+    loadUser();
+  </script>
+</body>
+</html>
