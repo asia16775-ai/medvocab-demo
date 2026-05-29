@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MedVocab — Admin Panel</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;
+      background: #f0f2f5;
+      min-height: 100vh;
+    }
+
+    /* ── Login Screen ── */
+    #login-screen {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #1a237e 0%, #283593 50%, #1565c0 100%);
+    }
+    .login-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 40px 36px;
+      width: 340px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      text-align: center;
+    }
+    .login-card .icon { font-size: 40px; margin-bottom: 12px; }
+    .login-card h2 { font-size: 20px; color: #1a237e; margin-bottom: 4px; }
+    .login-card p { font-size: 12px; color: #aaa; margin-bottom: 24px; }
+    .login-card input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1.5px solid #ddd;
+      border-radius: 8px;
+      font-size: 15px;
+      letter-spacing: 3px;
+      outline: none;
+      margin-bottom: 14px;
+      transition: border-color 0.2s;
+    }
+    .login-card input:focus { border-color: #1a237e; }
+    .login-card .btn {
+      width: 100%;
+      padding: 12px;
+      background: #1a237e;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .login-card .btn:hover { background: #283593; }
+    .login-card .err {
+      background: #ffebee;
+      color: #c62828;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      margin-top: 10px;
+      display: none;
+    }
+
+    /* ── Main Layout ── */
+    #main-screen { display: none; }
+
+    nav {
+      background: #1a237e;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 56px;
+      color: #fff;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    nav .brand { font-size: 16px; font-weight: 700; letter-spacing: 1px; }
+    nav .nav-right { display: flex; align-items: center; gap: 16px; }
+    nav .badge-admin {
+      background: #ff6f00;
+      color: #fff;
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-weight: 700;
+    }
+    nav .logout-btn {
+      font-size: 12px;
+      opacity: 0.7;
+      cursor: pointer;
+      padding: 6px 12px;
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 6px;
+    }
+    nav .logout-btn:hover { opacity: 1; background: rgba(255,255,255,0.1); }
+
+    .container { max-width: 1100px; margin: 28px auto; padding: 0 20px; }
+
+    /* ── Stats Cards ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 18px 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .stat-card .label { font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+    .stat-card .value { font-size: 32px; font-weight: 700; color: #1a237e; }
+    .stat-card .sub { font-size: 11px; color: #aaa; margin-top: 4px; }
+    .stat-card.green .value { color: #2e7d32; }
+    .stat-card.blue .value { color: #0d47a1; }
+    .stat-card.orange .value { color: #e65100; }
+
+    /* ── Section Header ── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .section-header h3 { font-size: 15px; color: #333; font-weight: 600; }
+    .section-header .actions { display: flex; gap: 8px; }
+
+    /* ── Filter Tabs ── */
+    .filter-tabs { display: flex; gap: 6px; margin-bottom: 14px; }
+    .tab {
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1.5px solid #ddd;
+      background: #fff;
+      color: #888;
+      transition: all 0.15s;
+    }
+    .tab.active { background: #1a237e; color: #fff; border-color: #1a237e; }
+    .tab:hover:not(.active) { border-color: #7986cb; color: #3949ab; }
+
+    /* ── Table ── */
+    .table-wrap {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      overflow: hidden;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    thead { background: #f8f9ff; }
+    thead th {
+      padding: 12px 16px;
+      font-size: 11px;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      text-align: left;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    tbody tr { border-top: 1px solid #f0f0f0; transition: background 0.1s; }
+    tbody tr:hover { background: #fafbff; }
+    tbody td { padding: 12px 16px; font-size: 13px; color: #333; }
+
+    .uid-badge {
+      font-family: monospace;
+      font-size: 14px;
+      font-weight: 700;
+      color: #1a237e;
+      background: #e8eaf6;
+      padding: 2px 8px;
+      border-radius: 6px;
+    }
+    .group-chip {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .chip-odd { background: #e8eaf6; color: #1a237e; }
+    .chip-even { background: #e3f2fd; color: #0d47a1; }
+
+    .status-dot {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+    }
+    .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .dot-green { background: #4caf50; }
+    .dot-grey { background: #bdbdbd; }
+
+    .score-badge {
+      font-weight: 700;
+      font-size: 14px;
+    }
+    .score-high { color: #2e7d32; }
+    .score-mid { color: #f57c00; }
+    .score-low { color: #c62828; }
+
+    /* ── Buttons ── */
+    .btn-sm {
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: opacity 0.15s;
+    }
+    .btn-sm:hover { opacity: 0.8; }
+    .btn-delete { background: #ffebee; color: #c62828; }
+    .btn-toggle { background: #e8f5e9; color: #2e7d32; }
+    .btn-toggle.undo { background: #fff3e0; color: #e65100; }
+
+    .btn-export {
+      padding: 8px 16px;
+      background: #1a237e;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-export:hover { background: #283593; }
+
+    .btn-refresh {
+      padding: 8px 14px;
+      background: #fff;
+      color: #555;
+      border: 1.5px solid #ddd;
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .btn-refresh:hover { border-color: #7986cb; color: #3949ab; }
+
+    /* ── Empty / Loading ── */
+    .table-empty {
+      text-align: center;
+      padding: 40px;
+      color: #bbb;
+      font-size: 14px;
+    }
+
+    /* ── Confirm Dialog ── */
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+    .overlay.show { display: flex; }
+    .dialog {
+      background: #fff;
+      border-radius: 14px;
+      padding: 28px;
+      width: 320px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      text-align: center;
+    }
+    .dialog .d-icon { font-size: 36px; margin-bottom: 12px; }
+    .dialog h3 { font-size: 16px; color: #333; margin-bottom: 8px; }
+    .dialog p { font-size: 13px; color: #888; margin-bottom: 20px; line-height: 1.5; }
+    .dialog-btns { display: flex; gap: 10px; }
+    .dialog-btns button { flex: 1; padding: 10px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; }
+    .btn-cancel { background: #f5f5f5; color: #555; }
+    .btn-confirm-del { background: #c62828; color: #fff; }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #333;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 13px;
+      z-index: 300;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+    }
+    .toast.show { opacity: 1; }
+
+    @media (max-width: 700px) {
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      table { font-size: 12px; }
+      thead th, tbody td { padding: 10px 10px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Login Screen -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="icon">🔐</div>
+    <h2>Admin Panel</h2>
+    <p>MedVocab Demo · เฉพาะผู้วิจัย</p>
+    <input type="password" id="admin-pass" placeholder="รหัสผ่าน Admin" autocomplete="off">
+    <button class="btn" onclick="adminLogin()">เข้าสู่ระบบ</button>
+    <div class="err" id="admin-err">❌ รหัสผ่านไม่ถูกต้อง</div>
+  </div>
+</div>
+
+<!-- Main Screen -->
+<div id="main-screen">
+  <nav>
+    <span class="brand">🩺 MedVocab <span class="badge-admin">ADMIN</span></span>
+    <div class="nav-right">
+      <span style="font-size:12px;opacity:0.7;" id="last-refresh"></span>
+      <span class="logout-btn" onclick="adminLogout()">ออกจากระบบ</span>
+    </div>
+  </nav>
+
+  <div class="container">
+
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="label">ผู้ลงทะเบียนทั้งหมด</div>
+        <div class="value" id="stat-total">—</div>
+        <div class="sub">คน</div>
+      </div>
+      <div class="stat-card green">
+        <div class="label">กลุ่มทดลอง (Odd)</div>
+        <div class="value" id="stat-odd">—</div>
+        <div class="sub">คน</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="label">กลุ่มควบคุม (Even)</div>
+        <div class="value" id="stat-even">—</div>
+        <div class="sub">คน</div>
+      </div>
+      <div class="stat-card orange">
+        <div class="label">ทำ Pre-test แล้ว</div>
+        <div class="value" id="stat-pretest">—</div>
+        <div class="sub" id="stat-pretest-pct">คน</div>
+      </div>
+    </div>
+
+    <!-- Users Table -->
+    <div class="section-header">
+      <h3>👥 รายชื่อผู้เข้าร่วม</h3>
+      <div class="actions">
+        <button class="btn-refresh" onclick="loadUsers()">🔄 รีเฟรช</button>
+        <button class="btn-export" onclick="exportCSV()">⬇️ Export CSV</button>
+      </div>
+    </div>
+
+    <div class="filter-tabs">
+      <div class="tab active" onclick="setFilter('all', this)">ทั้งหมด</div>
+      <div class="tab" onclick="setFilter('odd', this)">🔬 กลุ่มทดลอง</div>
+      <div class="tab" onclick="setFilter('even', this)">📋 กลุ่มควบคุม</div>
+      <div class="tab" onclick="setFilter('pretest', this)">✅ ทำ Pre-test แล้ว</div>
+      <div class="tab" onclick="setFilter('nopt', this)">⏳ ยังไม่ทำ Pre-test</div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>รหัส</th>
+            <th>กลุ่ม</th>
+            <th>ลงทะเบียน</th>
+            <th>Pre-test</th>
+            <th>คะแนน Pre</th>
+            <th>Post-test</th>
+            <th>คะแนน Post</th>
+            <th>จัดการ</th>
+          </tr>
+        </thead>
+        <tbody id="user-tbody">
+          <tr><td colspan="8" class="table-empty">⏳ กำลังโหลด...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<!-- Confirm Delete Dialog -->
+<div class="overlay" id="del-overlay">
+  <div class="dialog">
+    <div class="d-icon">🗑️</div>
+    <h3>ลบบัญชีนี้?</h3>
+    <p>รหัส <strong id="del-uid-text"></strong><br>ข้อมูลทั้งหมดจะถูกลบถาวร ไม่สามารถกู้คืนได้</p>
+    <div class="dialog-btns">
+      <button class="btn-cancel" onclick="closeDialog()">ยกเลิก</button>
+      <button class="btn-confirm-del" onclick="confirmDelete()">ลบเลย</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+  const SUPABASE_URL = 'https://dbchducvmgkkccwemmhl.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_5O2V4_4eY3umLJgQhm6BAQ_0psABX8g';
+  const HEADERS = {
+    'apikey': SUPABASE_KEY,
+    'Authorization': `Bearer ${SUPABASE_KEY}`,
+    'Content-Type': 'application/json'
+  };
+
+  // === Admin Password — เปลี่ยนได้ตามต้องการ ===
+  const ADMIN_PASSWORD = 'ADMIN2025';
+
+  let allUsers = [];
+  let currentFilter = 'all';
+  let deleteTarget = null;
+
+  // ── Auth ──
+  function adminLogin() {
+    const pass = document.getElementById('admin-pass').value.trim().toUpperCase();
+    if (pass === ADMIN_PASSWORD) {
+      sessionStorage.setItem('mv_admin', '1');
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('main-screen').style.display = 'block';
+      loadUsers();
+    } else {
+      document.getElementById('admin-err').style.display = 'block';
+    }
+  }
+
+  function adminLogout() {
+    sessionStorage.removeItem('mv_admin');
+    location.reload();
+  }
+
+  document.getElementById('admin-pass').addEventListener('keydown', e => {
+    if (e.key === 'Enter') adminLogin();
+  });
+
+  // Check session
+  if (sessionStorage.getItem('mv_admin') === '1') {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('main-screen').style.display = 'block';
+    loadUsers();
+  }
+
+  // ── Load Users ──
+  async function loadUsers() {
+    document.getElementById('user-tbody').innerHTML =
+      '<tr><td colspan="8" class="table-empty">⏳ กำลังโหลด...</td></tr>';
+    try {
+      const res = await fetch(
+        `${SUPABASE_URL}/rest/v1/users?select=*&order=registered_at.asc`,
+        { headers: HEADERS }
+      );
+      allUsers = await res.json();
+      updateStats();
+      renderTable();
+      const now = new Date();
+      document.getElementById('last-refresh').textContent =
+        `อัปเดต ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')} น.`;
+    } catch (e) {
+      document.getElementById('user-tbody').innerHTML =
+        '<tr><td colspan="8" class="table-empty">❌ โหลดข้อมูลไม่สำเร็จ</td></tr>';
+    }
+  }
+
+  // ── Stats ──
+  function updateStats() {
+    const total  = allUsers.length;
+    const odd    = allUsers.filter(u => u.group === 'odd').length;
+    const even   = allUsers.filter(u => u.group === 'even').length;
+    const pre    = allUsers.filter(u => u.pre_test_done).length;
+    const pct    = total > 0 ? Math.round(pre / total * 100) : 0;
+    document.getElementById('stat-total').textContent   = total;
+    document.getElementById('stat-odd').textContent     = odd;
+    document.getElementById('stat-even').textContent    = even;
+    document.getElementById('stat-pretest').textContent = pre;
+    document.getElementById('stat-pretest-pct').textContent = `คน (${pct}%)`;
+  }
+
+  // ── Filter ──
+  function setFilter(f, el) {
+    currentFilter = f;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    renderTable();
+  }
+
+  function getFiltered() {
+    if (currentFilter === 'odd')    return allUsers.filter(u => u.group === 'odd');
+    if (currentFilter === 'even')   return allUsers.filter(u => u.group === 'even');
+    if (currentFilter === 'pretest') return allUsers.filter(u => u.pre_test_done);
+    if (currentFilter === 'nopt')   return allUsers.filter(u => !u.pre_test_done);
+    return allUsers;
+  }
+
+  // ── Render Table ──
+  function renderTable() {
+    const users = getFiltered();
+    const tbody = document.getElementById('user-tbody');
+    if (users.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" class="table-empty">ไม่มีข้อมูล</td></tr>';
+      return;
+    }
+    tbody.innerHTML = users.map(u => {
+      const regDate = new Date(u.registered_at);
+      const dateStr = `${regDate.getDate()}/${regDate.getMonth()+1}/${regDate.getFullYear()+543} ${regDate.getHours()}:${String(regDate.getMinutes()).padStart(2,'0')}`;
+      const preScore  = u.pre_test_score  != null ? scoreHTML(u.pre_test_score, 15)  : '<span style="color:#ccc">—</span>';
+      const postScore = u.post_test_score != null ? scoreHTML(u.post_test_score, 15) : '<span style="color:#ccc">—</span>';
+      return `
+        <tr>
+          <td><span class="uid-badge">${u.uid}</span></td>
+          <td><span class="group-chip ${u.group === 'odd' ? 'chip-odd' : 'chip-even'}">
+            ${u.group === 'odd' ? '🔬 ทดลอง' : '📋 ควบคุม'}
+          </span></td>
+          <td style="color:#999;font-size:12px">${dateStr}</td>
+          <td>
+            <span class="status-dot">
+              <span class="dot ${u.pre_test_done ? 'dot-green' : 'dot-grey'}"></span>
+              ${u.pre_test_done ? 'เสร็จแล้ว' : 'ยังไม่ทำ'}
+            </span>
+          </td>
+          <td>${preScore}</td>
+          <td>
+            <span class="status-dot">
+              <span class="dot ${u.post_test_done ? 'dot-green' : 'dot-grey'}"></span>
+              ${u.post_test_done ? 'เสร็จแล้ว' : 'ยังไม่ทำ'}
+            </span>
+          </td>
+          <td>${postScore}</td>
+          <td style="display:flex;gap:6px;flex-wrap:wrap">
+            <button class="btn-sm ${u.pre_test_done ? 'btn-toggle undo' : 'btn-toggle'}"
+              onclick="togglePretest('${u.uid}', ${u.pre_test_done})">
+              ${u.pre_test_done ? '↩ ยกเลิก Pre' : '✅ ทำ Pre แล้ว'}
+            </button>
+            <button class="btn-sm btn-delete" onclick="askDelete('${u.uid}')">🗑️ ลบ</button>
+          </td>
+        </tr>`;
+    }).join('');
+  }
+
+  function scoreHTML(score, max) {
+    const pct = score / max;
+    const cls = pct >= 0.7 ? 'score-high' : pct >= 0.4 ? 'score-mid' : 'score-low';
+    return `<span class="score-badge ${cls}">${score}/${max}</span>`;
+  }
+
+  // ── Toggle Pre-test ──
+  async function togglePretest(uid, current) {
+    try {
+      await fetch(`${SUPABASE_URL}/rest/v1/users?uid=eq.${uid}`, {
+        method: 'PATCH',
+        headers: HEADERS,
+        body: JSON.stringify({ pre_test_done: !current })
+      });
+      showToast(`✅ อัปเดตสถานะ Pre-test ของ ${uid} แล้ว`);
+      await loadUsers();
+    } catch (e) {
+      showToast('❌ เกิดข้อผิดพลาด');
+    }
+  }
+
+  // ── Delete ──
+  function askDelete(uid) {
+    deleteTarget = uid;
+    document.getElementById('del-uid-text').textContent = uid;
+    document.getElementById('del-overlay').classList.add('show');
+  }
+
+  function closeDialog() {
+    deleteTarget = null;
+    document.getElementById('del-overlay').classList.remove('show');
+  }
+
+  async function confirmDelete() {
+    if (!deleteTarget) return;
+    closeDialog();
+    try {
+      // Delete sessions first
+      await fetch(`${SUPABASE_URL}/rest/v1/sessions?uid=eq.${deleteTarget}`, {
+        method: 'DELETE', headers: HEADERS
+      });
+      // Delete user
+      await fetch(`${SUPABASE_URL}/rest/v1/users?uid=eq.${deleteTarget}`, {
+        method: 'DELETE', headers: HEADERS
+      });
+      showToast(`🗑️ ลบบัญชี ${deleteTarget} แล้ว`);
+      await loadUsers();
+    } catch (e) {
+      showToast('❌ ลบไม่สำเร็จ');
+    }
+    deleteTarget = null;
+  }
+
+  // ── Export CSV ──
+  function exportCSV() {
+    if (allUsers.length === 0) { showToast('ไม่มีข้อมูลให้ export'); return; }
+    const header = ['uid','group','registered_at','pre_test_done','pre_test_score','post_test_done','post_test_score'];
+    const rows = allUsers.map(u => [
+      u.uid,
+      u.group,
+      u.registered_at,
+      u.pre_test_done ? '1' : '0',
+      u.pre_test_score ?? '',
+      u.post_test_done ? '1' : '0',
+      u.post_test_score ?? ''
+    ]);
+    const csv = [header, ...rows].map(r => r.join(',')).join('\n');
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `medvocab_data_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    showToast('⬇️ Export CSV สำเร็จ');
+  }
+
+  // ── Toast ──
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2800);
+  }
+</script>
+</body>
+</html>
