@@ -30,9 +30,21 @@
     .dot-done { background: #e8f5e9; color: #2e7d32; }
     .dot-active { background: var(--primary); color: #fff; }
     .dot-future { background: #f5f5f5; color: #bbb; }
+    .step { position: relative; }
+    .step:not(:last-child)::after {
+      content: ''; position: absolute; left: 15px; top: 36px;
+      width: 2px; height: calc(100% - 8px); background: #e8eaf6;
+    }
+    .dot-locked { background: #fff3e0; color: #ef6c00; }
+    .dot-skip { background: #f5f5f5; color: #ccc; border: 2px dashed #ddd; }
     .step-title { font-size: 14px; font-weight: 700; color: #333; }
     .step-date { font-size: 12px; color: #999; margin-top: 2px; }
     .step-desc { font-size: 12px; color: #777; margin-top: 3px; }
+    .step-score { display: inline-block; margin-top: 5px; background: #e8f5e9; color: #2e7d32; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 20px; }
+    .step-score.partial { background: #fff3e0; color: #ef6c00; }
+    .step-locked-badge { display: inline-block; margin-top: 5px; background: #fff3e0; color: #ef6c00; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 20px; }
+    .step-title.muted { color: #bbb; }
+    .step-date.muted { color: #ccc; }
     .action-card { border-radius: 14px; padding: 24px; color: #fff; box-shadow: 0 4px 16px rgba(0,48,135,0.25); background: linear-gradient(135deg, var(--primary), var(--primary-l)); }
     .action-card.control { background: linear-gradient(135deg, #1565c0, #0d47a1); }
     .action-card h2 { font-size: 18px; margin-bottom: 6px; font-weight: 800; }
@@ -55,46 +67,7 @@
     <div id="group-badge"></div>
     <div class="timeline">
       <h3>📅 ตารางกิจกรรม</h3>
-      <div class="step">
-        <div class="step-dot dot-active">✓</div>
-        <div class="step-info">
-          <div class="step-title">Pre-test (ก่อนการทดลอง)</div>
-          <div class="step-date">Day 0 · 29 พ.ค. 2569</div>
-          <div class="step-desc">แบบทดสอบ 15 ข้อ หลังสอบปลายภาควิชาโลหิตวิทยา</div>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-dot dot-future">1</div>
-        <div class="step-info">
-          <div class="step-title">แบบทดสอบครั้งที่ 1</div>
-          <div class="step-date">Day 1 · 30 พ.ค. 2569</div>
-          <div class="step-desc">เฉพาะกลุ่มทดลอง · 5 ข้อ</div>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-dot dot-future">2</div>
-        <div class="step-info">
-          <div class="step-title">แบบทดสอบครั้งที่ 2</div>
-          <div class="step-date">Day 3 · 1 มิ.ย. 2569</div>
-          <div class="step-desc">เฉพาะกลุ่มทดลอง · 5 ข้อ</div>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-dot dot-future">3</div>
-        <div class="step-info">
-          <div class="step-title">แบบทดสอบครั้งที่ 3</div>
-          <div class="step-date">Day 7 · 5 มิ.ย. 2569</div>
-          <div class="step-desc">เฉพาะกลุ่มทดลอง · 5 ข้อ</div>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-dot dot-future">🎯</div>
-        <div class="step-info">
-          <div class="step-title">Post-test (หลังการทดลอง)</div>
-          <div class="step-date">Day 14 · 12 มิ.ย. 2569</div>
-          <div class="step-desc">ทุกคน · 15 ข้อ · วัดความจำระยะยาว</div>
-        </div>
-      </div>
+      <div id="timeline-steps"><div style="text-align:center;padding:20px;color:#ccc;font-size:13px">⏳ กำลังโหลด...</div></div>
     </div>
     <div id="action-section"><div class="loading">⏳ กำลังโหลด...</div></div>
     <div class="info-card">
@@ -128,8 +101,12 @@
 
         document.getElementById('group-badge').innerHTML = `<div class="group-badge ${isOdd ? 'badge-odd' : 'badge-even'}">${isOdd ? '🔬 กลุ่มทดลอง (Experimental)' : '📋 กลุ่มควบคุม (Control)'}</div>`;
 
-        const as = document.getElementById('action-section');
         const today = todayStr();
+
+        // ---- render timeline ----
+        renderTimeline(user, settings, isOdd, today);
+
+        const as = document.getElementById('action-section');
 
         // ยังไม่ได้ทำ pre-test
         if (!user.pre_test_done) {
@@ -183,6 +160,105 @@
       } catch (e) {
         document.getElementById('action-section').innerHTML = '<div class="loading">❌ โหลดข้อมูลไม่สำเร็จ กรุณารีเฟรช</div>';
       }
+    }
+
+    function renderTimeline(user, settings, isOdd, today) {
+      const steps = [];
+
+      // ---- Pre-test ----
+      steps.push(makeStep({
+        icon: user.pre_test_done ? '✓' : '📝',
+        dotClass: user.pre_test_done ? 'dot-done' : 'dot-active',
+        title: 'Pre-test (ก่อนการทดลอง)',
+        date: `Day 0 · ${formatThaiDate(settings['pre_date'] || '2026-05-29')}`,
+        desc: 'ทุกคน · 15 ข้อ · หลังสอบปลายภาค',
+        score: user.pre_test_done ? `${user.pre_test_score ?? 0}/15` : null,
+        locked: false,
+        done: user.pre_test_done,
+      }));
+
+      // ---- Quiz 1, 2, 3 (เฉพาะกลุ่มทดลอง) ----
+      if (isOdd) {
+        const quizDefs = [
+          { num: 1, doneKey: 'quiz1_done', scoreKey: 'quiz1_score', dateKey: 'day1_date', label: 'Quiz Day 1', dayLabel: 'Day 1' },
+          { num: 2, doneKey: 'quiz2_done', scoreKey: 'quiz2_score', dateKey: 'day3_date', label: 'Quiz Day 3', dayLabel: 'Day 3' },
+          { num: 3, doneKey: 'quiz3_done', scoreKey: 'quiz3_score', dateKey: 'day7_date', label: 'Quiz Day 7', dayLabel: 'Day 7' },
+        ];
+        quizDefs.forEach(q => {
+          const done = !!user[q.doneKey];
+          const dateStr = settings[q.dateKey];
+          const locked = !done && dateStr && today < dateStr;
+          const canDo = !done && (!dateStr || today >= dateStr) && user.pre_test_done;
+          steps.push(makeStep({
+            icon: done ? '✓' : locked ? '🔒' : q.num.toString(),
+            dotClass: done ? 'dot-done' : locked ? 'dot-locked' : canDo ? 'dot-active' : 'dot-future',
+            title: q.label,
+            titleMuted: !done && !canDo && !locked,
+            date: `${q.dayLabel} · ${formatThaiDate(dateStr)}`,
+            dateMuted: !done && !canDo,
+            desc: 'เฉพาะกลุ่มทดลอง · 5 ข้อ · 1 ข้อ/บท',
+            score: done ? `${user[q.scoreKey] ?? 0}/5` : null,
+            locked,
+            done,
+          }));
+        });
+      } else {
+        // กลุ่มควบคุม: แสดงเป็น skip
+        [
+          { label: 'Quiz Day 1', day: 'Day 1', dateKey: 'day1_date' },
+          { label: 'Quiz Day 3', day: 'Day 3', dateKey: 'day3_date' },
+          { label: 'Quiz Day 7', day: 'Day 7', dateKey: 'day7_date' },
+        ].forEach(q => {
+          steps.push(makeStep({
+            icon: '—',
+            dotClass: 'dot-skip',
+            title: q.label,
+            titleMuted: true,
+            date: `${q.day} · ${formatThaiDate(settings[q.dateKey])}`,
+            dateMuted: true,
+            desc: 'เฉพาะกลุ่มทดลองเท่านั้น',
+            score: null,
+            locked: false,
+            done: false,
+            skip: true,
+          }));
+        });
+      }
+
+      // ---- Post-test ----
+      const postDate = settings['post_date'];
+      const postLocked = !user.post_test_done && postDate && today < postDate;
+      const postCanDo = !user.post_test_done && (!postDate || today >= postDate) && user.pre_test_done;
+      steps.push(makeStep({
+        icon: user.post_test_done ? '✓' : postLocked ? '🔒' : '🎯',
+        dotClass: user.post_test_done ? 'dot-done' : postLocked ? 'dot-locked' : postCanDo ? 'dot-active' : 'dot-future',
+        title: 'Post-test (หลังการทดลอง)',
+        date: `Day 14 · ${formatThaiDate(postDate)}`,
+        desc: 'ทุกคน · 15 ข้อ · วัดความจำระยะยาว',
+        score: user.post_test_done ? `${user.post_test_score ?? 0}/15` : null,
+        locked: postLocked,
+        done: user.post_test_done,
+      }));
+
+      document.getElementById('timeline-steps').innerHTML = steps.join('');
+    }
+
+    function makeStep({ icon, dotClass, title, titleMuted, date, dateMuted, desc, score, locked, done, skip }) {
+      const scoreBadge = score
+        ? `<div class="step-score">${done ? '✅' : ''} ${score}</div>`
+        : locked
+          ? `<div class="step-locked-badge">🔒 เปิด ${date.split('·')[1]?.trim() || ''}</div>`
+          : '';
+      return `
+        <div class="step">
+          <div class="step-dot ${dotClass}">${icon}</div>
+          <div class="step-info">
+            <div class="step-title ${titleMuted ? 'muted' : ''}">${title}</div>
+            <div class="step-date ${dateMuted ? 'muted' : ''}">${date}</div>
+            <div class="step-desc">${desc}</div>
+            ${scoreBadge}
+          </div>
+        </div>`;
     }
 
     function todayStr() {
