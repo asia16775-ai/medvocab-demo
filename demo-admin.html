@@ -4,643 +4,859 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MedVocab — Admin Panel</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --primary: #003087; --primary-l: #0051CC;
+      --success: #34C759; --danger: #FF3B30; --warning: #FF9F0A; --info: #007AFF;
+      --card: rgba(255,255,255,0.88); --card-border: rgba(255,255,255,0.6);
+      --text: #1C1C1E; --text-2: #3A3A3C; --text-3: #636366;
+      --separator: rgba(60,60,67,0.12); --radius: 18px; --radius-sm: 12px;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
     body {
-      font-family: 'Segoe UI', 'Helvetica Neue', sans-serif;
-      background: #f0f2f5;
-      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+      background: linear-gradient(160deg, #B8D4EF 0%, #D6E8F7 35%, #EBF3FB 65%, #F5EDD8 100%);
+      background-attachment: fixed; color: var(--text); min-height:100vh;
     }
 
-    /* ── Login Screen ── */
-    #login-screen {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: linear-gradient(135deg, #1a237e 0%, #283593 50%, #1565c0 100%);
-    }
+    /* LOGIN */
+    #login-screen { display:flex; min-height:100vh; align-items:center; justify-content:center; padding:24px; }
     .login-card {
-      background: #fff;
-      border-radius: 16px;
-      padding: 40px 36px;
-      width: 340px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-      text-align: center;
+      background: var(--card); backdrop-filter: blur(24px) saturate(200%);
+      border: 1px solid var(--card-border); border-radius:28px; padding:44px 40px;
+      width:100%; max-width:380px; text-align:center;
+      box-shadow: 0 8px 40px rgba(0,48,135,0.14);
+      animation: loginIn 0.5s cubic-bezier(0.34,1.56,0.64,1);
     }
-    .login-card .icon { font-size: 40px; margin-bottom: 12px; }
-    .login-card h2 { font-size: 20px; color: #1a237e; margin-bottom: 4px; }
-    .login-card p { font-size: 12px; color: #aaa; margin-bottom: 24px; }
-    .login-card input {
-      width: 100%;
-      padding: 12px 14px;
-      border: 1.5px solid #ddd;
-      border-radius: 8px;
-      font-size: 15px;
-      letter-spacing: 3px;
-      outline: none;
-      margin-bottom: 14px;
-      transition: border-color 0.2s;
-    }
-    .login-card input:focus { border-color: #1a237e; }
-    .login-card .btn {
-      width: 100%;
-      padding: 12px;
-      background: #1a237e;
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    .login-card .btn:hover { background: #283593; }
-    .login-card .err {
-      background: #ffebee;
-      color: #c62828;
-      padding: 8px 12px;
-      border-radius: 8px;
-      font-size: 12px;
-      margin-top: 10px;
-      display: none;
-    }
+    @keyframes loginIn { from{opacity:0;transform:scale(0.88) translateY(30px)} to{opacity:1;transform:scale(1) translateY(0)} }
+    .login-icon { width:72px;height:72px; background:linear-gradient(135deg,var(--primary),var(--primary-l)); border-radius:20px; display:flex;align-items:center;justify-content:center; font-size:36px; margin:0 auto 20px; box-shadow:0 8px 24px rgba(0,48,135,0.3); }
+    .login-card h1 { font-size:26px;font-weight:800;color:var(--primary);letter-spacing:-0.6px;margin-bottom:6px; }
+    .login-card .login-sub { color:var(--text-3);font-size:13px;margin-bottom:28px;line-height:1.5; }
+    .univ-tag { display:inline-block;background:rgba(201,168,76,0.15);color:#8B6914;font-size:11px;font-weight:700;padding:3px 10px;border-radius:99px;border:1px solid rgba(201,168,76,0.3);margin-bottom:20px; }
+    .login-card input { width:100%;padding:14px 18px;border:2px solid rgba(60,60,67,0.18);border-radius:var(--radius-sm);font-size:16px;outline:none;text-align:center;letter-spacing:4px;background:rgba(255,255,255,0.7);transition:all 0.15s;font-family:inherit;margin-bottom:12px; }
+    .login-card input::placeholder { letter-spacing:0;font-size:14px; }
+    .login-card input:focus { border-color:var(--primary);box-shadow:0 0 0 4px rgba(0,48,135,0.1); }
+    .login-card .btn-login { width:100%;padding:14px;font-size:16px;border-radius:var(--radius-sm);background:linear-gradient(135deg,var(--primary),var(--primary-l));color:white;border:none;cursor:pointer;font-weight:700;font-family:inherit;box-shadow:0 4px 16px rgba(0,48,135,0.3);transition:all 0.2s; }
+    .login-card .btn-login:hover { filter:brightness(1.1); }
+    .login-error { color:var(--danger);font-size:13px;margin-top:10px;font-weight:500;min-height:18px; }
+    .login-back { display:block;margin-top:20px;font-size:13px;color:var(--text-3);text-decoration:none;transition:color 0.15s;cursor:pointer; }
+    .login-back:hover { color:var(--primary); }
 
-    /* ── Main Layout ── */
-    #main-screen { display: none; }
+    /* NAVBAR */
+    #app { display:none; }
+    .navbar { background:rgba(255,255,255,0.72);backdrop-filter:blur(24px) saturate(180%);border-bottom:1px solid var(--card-border);padding:0 28px;display:flex;align-items:center;gap:12px;height:58px;position:sticky;top:0;z-index:100; }
+    .navbar-logo { width:34px;height:34px;background:linear-gradient(135deg,var(--primary),var(--primary-l));border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;box-shadow:0 2px 8px rgba(0,48,135,0.3); }
+    .navbar h1 { font-size:17px;font-weight:700;color:var(--primary);letter-spacing:-0.3px; }
+    .admin-badge { background:linear-gradient(135deg,var(--danger),#FF6B6B);color:white;font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;letter-spacing:0.5px;text-transform:uppercase; }
+    .navbar-right { margin-left:auto;display:flex;align-items:center;gap:8px; }
+    .nav-link { font-size:13px;color:var(--text-3);cursor:pointer;padding:6px 12px;border-radius:8px;transition:all 0.15s;font-weight:500; }
+    .nav-link:hover { background:rgba(0,48,135,0.08);color:var(--primary); }
+    .nav-link-danger:hover { background:rgba(255,59,48,0.08);color:var(--danger); }
 
-    nav {
-      background: #1a237e;
-      padding: 0 24px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      height: 56px;
-      color: #fff;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    }
-    nav .brand { font-size: 16px; font-weight: 700; letter-spacing: 1px; }
-    nav .nav-right { display: flex; align-items: center; gap: 16px; }
-    nav .badge-admin {
-      background: #ff6f00;
-      color: #fff;
-      font-size: 10px;
-      padding: 2px 8px;
-      border-radius: 20px;
-      font-weight: 700;
-    }
-    nav .logout-btn {
-      font-size: 12px;
-      opacity: 0.7;
-      cursor: pointer;
-      padding: 6px 12px;
-      border: 1px solid rgba(255,255,255,0.3);
-      border-radius: 6px;
-    }
-    nav .logout-btn:hover { opacity: 1; background: rgba(255,255,255,0.1); }
+    /* TABS */
+    .tabs { background:rgba(255,255,255,0.65);backdrop-filter:blur(20px);border-bottom:1px solid var(--card-border);padding:0 28px;display:flex;gap:2px;overflow-x:auto;scrollbar-width:none; }
+    .tabs::-webkit-scrollbar { display:none; }
+    .tab-btn { padding:14px 18px;border:none;background:none;font-size:13px;font-weight:600;color:var(--text-3);cursor:pointer;border-bottom:2.5px solid transparent;transition:all 0.2s;white-space:nowrap;font-family:inherit; }
+    .tab-btn.active { color:var(--primary);border-bottom-color:var(--primary); }
+    .tab-btn:hover:not(.active) { color:var(--primary); }
 
-    .container { max-width: 1100px; margin: 28px auto; padding: 0 20px; }
+    /* CONTENT */
+    .content { padding:28px 28px 60px;max-width:1120px;margin:0 auto; }
+    .tab-panel { display:none; }
+    .tab-panel.active { display:block;animation:fadeUp 0.25s ease; }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
 
-    /* ── Stats Cards ── */
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 14px;
-      margin-bottom: 24px;
-    }
-    .stat-card {
-      background: #fff;
-      border-radius: 12px;
-      padding: 18px 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    }
-    .stat-card .label { font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
-    .stat-card .value { font-size: 32px; font-weight: 700; color: #1a237e; }
-    .stat-card .sub { font-size: 11px; color: #aaa; margin-top: 4px; }
-    .stat-card.green .value { color: #2e7d32; }
-    .stat-card.blue .value { color: #0d47a1; }
-    .stat-card.orange .value { color: #e65100; }
+    /* CARDS */
+    .card { background:var(--card);backdrop-filter:blur(20px) saturate(180%);border:1px solid var(--card-border);border-radius:var(--radius);padding:24px;box-shadow:0 4px 24px rgba(0,48,135,0.06),0 1px 4px rgba(0,0,0,0.04);margin-bottom:16px; }
+    .card-header { display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px; }
+    .card-header h2 { font-size:17px;font-weight:700;color:var(--text);letter-spacing:-0.3px; }
+    .card-subtitle { font-size:12px;color:var(--text-3);margin-top:3px;line-height:1.5; }
 
-    /* ── Section Header ── */
-    .section-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 14px;
-    }
-    .section-header h3 { font-size: 15px; color: #333; font-weight: 600; }
-    .section-header .actions { display: flex; gap: 8px; }
+    /* BUTTONS */
+    .btn { padding:9px 18px;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.18s;display:inline-flex;align-items:center;gap:5px;font-family:inherit; }
+    .btn:active { transform:scale(0.96); }
+    .btn-primary { background:linear-gradient(135deg,var(--primary),var(--primary-l));color:white;box-shadow:0 2px 10px rgba(0,48,135,0.3); }
+    .btn-primary:hover { filter:brightness(1.08); }
+    .btn-success { background:linear-gradient(135deg,#28A745,var(--success));color:white;box-shadow:0 2px 8px rgba(52,199,89,0.3); }
+    .btn-success:hover { filter:brightness(1.08); }
+    .btn-danger { background:linear-gradient(135deg,#E0321E,var(--danger));color:white;box-shadow:0 2px 8px rgba(255,59,48,0.3); }
+    .btn-danger:hover { filter:brightness(1.08); }
+    .btn-ghost { background:rgba(0,48,135,0.07);color:var(--primary);border:1px solid rgba(0,48,135,0.12); }
+    .btn-ghost:hover { background:rgba(0,48,135,0.12); }
+    .btn-warning { background:linear-gradient(135deg,#E88C00,var(--warning));color:white;box-shadow:0 2px 8px rgba(255,159,10,0.3); }
+    .btn-sm { padding:6px 12px;font-size:12px;border-radius:8px; }
 
-    /* ── Filter Tabs ── */
-    .filter-tabs { display: flex; gap: 6px; margin-bottom: 14px; }
-    .tab {
-      padding: 6px 14px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      border: 1.5px solid #ddd;
-      background: #fff;
-      color: #888;
-      transition: all 0.15s;
-    }
-    .tab.active { background: #1a237e; color: #fff; border-color: #1a237e; }
-    .tab:hover:not(.active) { border-color: #7986cb; color: #3949ab; }
+    /* TABLE */
+    .table-wrap { overflow-x:auto;border-radius:var(--radius-sm); }
+    table { width:100%;border-collapse:collapse;font-size:13px; }
+    th { text-align:left;padding:10px 14px;background:rgba(0,48,135,0.04);color:var(--text-3);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;border-bottom:1px solid var(--separator); }
+    td { padding:12px 14px;border-bottom:1px solid rgba(60,60,67,0.08);vertical-align:middle; }
+    tr:last-child td { border-bottom:none; }
+    tr:hover td { background:rgba(0,48,135,0.025); }
+    .table-empty { text-align:center;padding:36px;color:var(--text-3);font-size:13px; }
 
-    /* ── Table ── */
-    .table-wrap {
-      background: #fff;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-      overflow: hidden;
-    }
-    table { width: 100%; border-collapse: collapse; }
-    thead { background: #f8f9ff; }
-    thead th {
-      padding: 12px 16px;
-      font-size: 11px;
-      color: #888;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      text-align: left;
-      font-weight: 600;
-      white-space: nowrap;
-    }
-    tbody tr { border-top: 1px solid #f0f0f0; transition: background 0.1s; }
-    tbody tr:hover { background: #fafbff; }
-    tbody td { padding: 12px 16px; font-size: 13px; color: #333; }
+    /* STATS */
+    .stats-row { display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px; }
+    .stat-box { flex:1;min-width:110px;background:var(--card);backdrop-filter:blur(20px);border:1px solid var(--card-border);border-radius:var(--radius-sm);padding:18px 16px;text-align:center;box-shadow:0 2px 12px rgba(0,48,135,0.05); }
+    .stat-box .value { font-size:32px;font-weight:800;background:linear-gradient(135deg,var(--primary),var(--primary-l));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;letter-spacing:-1px; }
+    .stat-box .label { font-size:11px;color:var(--text-3);margin-top:3px;font-weight:500; }
 
-    .uid-badge {
-      font-family: monospace;
-      font-size: 14px;
-      font-weight: 700;
-      color: #1a237e;
-      background: #e8eaf6;
-      padding: 2px 8px;
-      border-radius: 6px;
+    /* FORM */
+    .form-group { margin-bottom:14px; }
+    .form-group label { display:block;font-size:12px;font-weight:600;color:var(--text-3);margin-bottom:5px; }
+    .form-group input, .form-group select, .form-group textarea {
+      width:100%;padding:11px 14px;border:1.5px solid rgba(60,60,67,0.2);border-radius:var(--radius-sm);
+      font-size:14px;outline:none;font-family:inherit;transition:border-color 0.15s,box-shadow 0.15s;
+      background:rgba(255,255,255,0.8);color:var(--text);
     }
-    .group-chip {
-      display: inline-block;
-      padding: 3px 10px;
-      border-radius: 12px;
-      font-size: 11px;
-      font-weight: 600;
-    }
-    .chip-odd { background: #e8eaf6; color: #1a237e; }
-    .chip-even { background: #e3f2fd; color: #0d47a1; }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color:var(--primary);box-shadow:0 0 0 3px rgba(0,48,135,0.1); }
+    .form-group textarea { resize:vertical;min-height:72px; }
 
-    .status-dot {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 12px;
-    }
-    .dot { width: 8px; height: 8px; border-radius: 50%; }
-    .dot-green { background: #4caf50; }
-    .dot-grey { background: #bdbdbd; }
+    /* MODAL */
+    .modal-overlay { display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);backdrop-filter:blur(8px);z-index:200;align-items:center;justify-content:center;padding:20px; }
+    .modal-overlay.show { display:flex; }
+    .modal { background:rgba(255,255,255,0.97);border:1px solid var(--card-border);border-radius:var(--radius);padding:28px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 80px rgba(0,0,0,0.18);animation:modalIn 0.28s cubic-bezier(0.34,1.56,0.64,1); }
+    @keyframes modalIn { from{opacity:0;transform:scale(0.92) translateY(20px)} to{opacity:1;transform:scale(1) translateY(0)} }
+    .modal h3 { font-size:20px;font-weight:700;margin-bottom:20px;color:var(--text);letter-spacing:-0.4px; }
+    .modal-footer { display:flex;gap:8px;justify-content:flex-end;margin-top:24px; }
 
-    .score-badge {
-      font-weight: 700;
-      font-size: 14px;
-    }
-    .score-high { color: #2e7d32; }
-    .score-mid { color: #f57c00; }
-    .score-low { color: #c62828; }
+    /* CHIPS & BADGES */
+    .chip { display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700; }
+    .chip-odd { background:#e8eaf6;color:var(--primary); }
+    .chip-even { background:#e3f2fd;color:#0d47a1; }
+    .dot-badge { display:inline-flex;align-items:center;gap:5px;font-size:12px; }
+    .dot { width:8px;height:8px;border-radius:50%; }
+    .dot-green { background:#4caf50; }
+    .dot-grey { background:#bdbdbd; }
+    .score-high { color:#2e7d32;font-weight:700; }
+    .score-mid { color:#f57c00;font-weight:700; }
+    .score-low { color:#c62828;font-weight:700; }
 
-    /* ── Buttons ── */
-    .btn-sm {
-      padding: 5px 12px;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      border: none;
-      transition: opacity 0.15s;
-    }
-    .btn-sm:hover { opacity: 0.8; }
-    .btn-delete { background: #ffebee; color: #c62828; }
-    .btn-toggle { background: #e8f5e9; color: #2e7d32; }
-    .btn-toggle.undo { background: #fff3e0; color: #e65100; }
+    /* DANGER ZONE */
+    .danger-zone { border:2px solid rgba(255,59,48,0.25);background:rgba(255,59,48,0.03);border-radius:var(--radius);padding:24px;margin-bottom:16px; }
+    .danger-zone h2 { color:var(--danger); }
+    .full-reset-zone { border:2px solid rgba(153,27,27,0.3);background:rgba(153,27,27,0.04);border-radius:var(--radius);padding:24px;margin-bottom:16px; }
+    .full-reset-zone h2 { color:#991b1b; }
+    .test-card { background:rgba(0,122,255,0.05);border:2px solid rgba(0,122,255,0.2);border-radius:var(--radius);padding:24px;margin-bottom:16px; }
+    .test-card h2 { color:var(--info); }
 
-    .btn-export {
-      padding: 8px 16px;
-      background: #1a237e;
-      color: #fff;
-      border: none;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .btn-export:hover { background: #283593; }
+    /* SCHED */
+    .sched-grid { display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:16px; }
+    .sched-card { border-radius:var(--radius-sm);padding:16px;border:1px solid transparent; }
+    .sched-d1 { background:rgba(0,48,135,0.06);border-color:rgba(0,48,135,0.15); }
+    .sched-d3 { background:rgba(255,159,10,0.07);border-color:rgba(255,159,10,0.2); }
+    .sched-d7 { background:rgba(52,199,89,0.07);border-color:rgba(52,199,89,0.2); }
+    .sched-pt { background:rgba(255,59,48,0.06);border-color:rgba(255,59,48,0.18); }
+    .sched-label { font-size:12px;font-weight:700;margin-bottom:10px; }
+    .sched-input { width:100%;padding:9px 12px;border:1.5px solid rgba(60,60,67,0.2);border-radius:10px;font-size:13px;outline:none;font-family:inherit;background:rgba(255,255,255,0.7);margin-bottom:10px; }
+    .sched-input:focus { border-color:var(--primary); }
+    .sched-btns { display:flex;gap:6px;margin-bottom:6px; }
+    .sched-status { font-size:11px;color:var(--text-3); }
 
-    .btn-refresh {
-      padding: 8px 14px;
-      background: #fff;
-      color: #555;
-      border: 1.5px solid #ddd;
-      border-radius: 8px;
-      font-size: 13px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .btn-refresh:hover { border-color: #7986cb; color: #3949ab; }
+    /* INFO */
+    .info-box { background:rgba(0,48,135,0.05);border:1px solid rgba(0,48,135,0.12);border-radius:var(--radius-sm);padding:14px 16px;font-size:12px;color:var(--text-3);line-height:1.6; }
+    .info-box strong { color:var(--primary); }
 
-    /* ── Empty / Loading ── */
-    .table-empty {
-      text-align: center;
-      padding: 40px;
-      color: #bbb;
-      font-size: 14px;
-    }
+    /* Q-TYPE TABS */
+    .filter-row { display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap; }
+    .filter-tab { padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid #ddd;background:#fff;color:#888;transition:all 0.15s; }
+    .filter-tab.active { background:var(--primary);color:#fff;border-color:var(--primary); }
 
-    /* ── Confirm Dialog ── */
-    .overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.4);
-      z-index: 200;
-      align-items: center;
-      justify-content: center;
-    }
-    .overlay.show { display: flex; }
-    .dialog {
-      background: #fff;
-      border-radius: 14px;
-      padding: 28px;
-      width: 320px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-      text-align: center;
-    }
-    .dialog .d-icon { font-size: 36px; margin-bottom: 12px; }
-    .dialog h3 { font-size: 16px; color: #333; margin-bottom: 8px; }
-    .dialog p { font-size: 13px; color: #888; margin-bottom: 20px; line-height: 1.5; }
-    .dialog-btns { display: flex; gap: 10px; }
-    .dialog-btns button { flex: 1; padding: 10px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; }
-    .btn-cancel { background: #f5f5f5; color: #555; }
-    .btn-confirm-del { background: #c62828; color: #fff; }
+    /* CHART */
+    .chart-wrap { position:relative;height:220px; }
 
-    /* ── Toast ── */
-    .toast {
-      position: fixed;
-      bottom: 24px;
-      right: 24px;
-      background: #333;
-      color: #fff;
-      padding: 12px 20px;
-      border-radius: 10px;
-      font-size: 13px;
-      z-index: 300;
-      opacity: 0;
-      transition: opacity 0.3s;
-      pointer-events: none;
-    }
-    .toast.show { opacity: 1; }
+    /* TOAST */
+    .toast { position:fixed;bottom:24px;right:24px;background:rgba(28,28,30,0.92);color:#fff;padding:12px 20px;border-radius:12px;font-size:13px;z-index:300;opacity:0;transition:opacity 0.3s;pointer-events:none;backdrop-filter:blur(10px); }
+    .toast.show { opacity:1; }
 
-    @media (max-width: 700px) {
-      .stats-grid { grid-template-columns: 1fr 1fr; }
-      table { font-size: 12px; }
-      thead th, tbody td { padding: 10px 10px; }
-    }
+    @media(max-width:700px) { .content { padding:16px 16px 60px; } .navbar,.tabs { padding:0 16px; } .stats-row { gap:8px; } }
   </style>
 </head>
 <body>
 
-<!-- Login Screen -->
+<!-- LOGIN -->
 <div id="login-screen">
   <div class="login-card">
-    <div class="icon">🔐</div>
-    <h2>Admin Panel</h2>
-    <p>MedVocab Demo · เฉพาะผู้วิจัย</p>
-    <input type="password" id="admin-pass" placeholder="รหัสผ่าน Admin" autocomplete="off">
-    <button class="btn" onclick="adminLogin()">เข้าสู่ระบบ</button>
-    <div class="err" id="admin-err">❌ รหัสผ่านไม่ถูกต้อง</div>
+    <div class="login-icon">🔐</div>
+    <h1>Admin Panel</h1>
+    <div class="univ-tag">🎓 Burapha University · MedVocab</div>
+    <p class="login-sub">Research Management System<br>เฉพาะผู้ดูแลระบบเท่านั้น</p>
+    <input type="password" id="admin-pass" placeholder="รหัสผ่าน Admin">
+    <button class="btn-login" onclick="adminLogin()">เข้าสู่ระบบ</button>
+    <div class="login-error" id="login-error"></div>
+    <span class="login-back" onclick="location.href='demo-login.html'">← กลับหน้าหลัก</span>
   </div>
 </div>
 
-<!-- Main Screen -->
-<div id="main-screen">
-  <nav>
-    <span class="brand">🩺 MedVocab <span class="badge-admin">ADMIN</span></span>
-    <div class="nav-right">
-      <span style="font-size:12px;opacity:0.7;" id="last-refresh"></span>
-      <span class="logout-btn" onclick="adminLogout()">ออกจากระบบ</span>
+<!-- APP -->
+<div id="app">
+  <div class="navbar">
+    <div class="navbar-logo">🩺</div>
+    <h1>MedVocab</h1>
+    <span class="admin-badge">ADMIN</span>
+    <div class="navbar-right">
+      <span class="nav-link" id="refresh-time"></span>
+      <span class="nav-link nav-link-danger" onclick="adminLogout()">ออกจากระบบ</span>
     </div>
-  </nav>
+  </div>
 
-  <div class="container">
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('dashboard',this)">📊 Dashboard</button>
+    <button class="tab-btn" onclick="switchTab('questions',this)">❓ โจทย์</button>
+    <button class="tab-btn" onclick="switchTab('students',this)">👥 นิสิต</button>
+    <button class="tab-btn" onclick="switchTab('logs',this)">📋 Logs</button>
+    <button class="tab-btn" onclick="switchTab('settings',this)">⚙️ ตั้งค่า</button>
+    <button class="tab-btn" onclick="switchTab('reset',this)">🔄 Reset</button>
+  </div>
 
-    <!-- Stats -->
-    <div class="stats-grid">
-      <div class="stat-card">
-        <div class="label">ผู้ลงทะเบียนทั้งหมด</div>
-        <div class="value" id="stat-total">—</div>
-        <div class="sub">คน</div>
-      </div>
-      <div class="stat-card green">
-        <div class="label">กลุ่มทดลอง (Odd)</div>
-        <div class="value" id="stat-odd">—</div>
-        <div class="sub">คน</div>
-      </div>
-      <div class="stat-card blue">
-        <div class="label">กลุ่มควบคุม (Even)</div>
-        <div class="value" id="stat-even">—</div>
-        <div class="sub">คน</div>
-      </div>
-      <div class="stat-card orange">
-        <div class="label">ทำ Pre-test แล้ว</div>
-        <div class="value" id="stat-pretest">—</div>
-        <div class="sub" id="stat-pretest-pct">คน</div>
-      </div>
-    </div>
+  <div class="content">
 
-    <!-- Users Table -->
-    <div class="section-header">
-      <h3>👥 รายชื่อผู้เข้าร่วม</h3>
-      <div class="actions">
-        <button class="btn-refresh" onclick="loadUsers()">🔄 รีเฟรช</button>
-        <button class="btn-export" onclick="exportCSV()">⬇️ Export CSV</button>
+    <!-- DASHBOARD -->
+    <div id="tab-dashboard" class="tab-panel active">
+      <div class="stats-row" id="stats-row">
+        <div class="stat-box"><div class="value" id="s-total">—</div><div class="label">นิสิตทั้งหมด</div></div>
+        <div class="stat-box"><div class="value" id="s-exp">—</div><div class="label">กลุ่มทดลอง</div></div>
+        <div class="stat-box"><div class="value" id="s-ctrl">—</div><div class="label">กลุ่มควบคุม</div></div>
+        <div class="stat-box"><div class="value" id="s-pre">—</div><div class="label">ทำ Pre-test แล้ว</div></div>
+        <div class="stat-box"><div class="value" id="s-post">—</div><div class="label">ทำ Post-test แล้ว</div></div>
       </div>
-    </div>
-
-    <div class="filter-tabs">
-      <div class="tab active" onclick="setFilter('all', this)">ทั้งหมด</div>
-      <div class="tab" onclick="setFilter('odd', this)">🔬 กลุ่มทดลอง</div>
-      <div class="tab" onclick="setFilter('even', this)">📋 กลุ่มควบคุม</div>
-      <div class="tab" onclick="setFilter('pretest', this)">✅ ทำ Pre-test แล้ว</div>
-      <div class="tab" onclick="setFilter('nopt', this)">⏳ ยังไม่ทำ Pre-test</div>
-    </div>
-
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>รหัส</th>
-            <th>กลุ่ม</th>
-            <th>ลงทะเบียน</th>
-            <th>Pre-test</th>
-            <th>คะแนน Pre</th>
-            <th>Post-test</th>
-            <th>คะแนน Post</th>
-            <th>จัดการ</th>
-          </tr>
-        </thead>
-        <tbody id="user-tbody">
-          <tr><td colspan="8" class="table-empty">⏳ กำลังโหลด...</td></tr>
-        </tbody>
-      </table>
+      <div class="card">
+        <div class="card-header">
+          <div><h2>📈 สถานะความคืบหน้า</h2><p class="card-subtitle">Pre-test / Post-test แยกตามกลุ่ม</p></div>
+          <button class="btn btn-ghost btn-sm" onclick="loadDashboard()">🔄 อัปเดต</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
+          <div style="background:rgba(0,48,135,0.06);border:1px solid rgba(0,48,135,0.12);border-radius:12px;padding:16px">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--primary);margin-bottom:10px">🔬 กลุ่มทดลอง</div>
+            <div id="exp-progress"></div>
+          </div>
+          <div style="background:rgba(255,159,10,0.07);border:1px solid rgba(255,159,10,0.18);border-radius:12px;padding:16px">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#8B5500;margin-bottom:10px">📋 กลุ่มควบคุม</div>
+            <div id="ctrl-progress"></div>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="chart-scores"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h2>⬇️ Export ข้อมูลสำหรับวิจัย</h2></div>
+        <p style="margin-bottom:16px;font-size:13px;color:var(--text-3);line-height:1.6">ดาวน์โหลดข้อมูลดิบเป็น CSV สำหรับวิเคราะห์ใน Excel หรือ SPSS</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-success" onclick="exportCSV('all')">⬇️ Export ทั้งหมด</button>
+          <button class="btn btn-ghost" onclick="exportCSV('pre')">⬇️ Pre-test เท่านั้น</button>
+          <button class="btn btn-ghost" onclick="exportCSV('post')">⬇️ Post-test เท่านั้น</button>
+        </div>
+      </div>
     </div>
 
+    <!-- QUESTIONS -->
+    <div id="tab-questions" class="tab-panel">
+      <div class="card">
+        <div class="card-header">
+          <div><h2>❓ คลังข้อสอบ</h2><p class="card-subtitle">จัดการข้อสอบ Pre-test และ Post-test ทั้งหมด</p></div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-ghost btn-sm" onclick="loadQuestions()">🔄 รีเฟรช</button>
+            <button class="btn btn-primary btn-sm" onclick="openQModal()">+ เพิ่มข้อสอบ</button>
+          </div>
+        </div>
+        <div class="filter-row">
+          <div class="filter-tab active" onclick="setQFilter('all',this)">ทั้งหมด</div>
+          <div class="filter-tab" onclick="setQFilter('pre',this)">📝 Pre-test</div>
+          <div class="filter-tab" onclick="setQFilter('post',this)">🎯 Post-test</div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>#</th><th>ประเภท</th><th>คำถาม</th><th>คำตอบถูก</th><th>จัดการ</th></tr></thead>
+            <tbody id="q-tbody"><tr><td colspan="5" class="table-empty">⏳ กำลังโหลด...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- STUDENTS -->
+    <div id="tab-students" class="tab-panel">
+      <div class="card">
+        <div class="card-header">
+          <div><h2>👥 รายชื่อนิสิต</h2><p class="card-subtitle">จัดการบัญชีผู้เข้าร่วมวิจัยทั้งหมด</p></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-ghost btn-sm" onclick="loadStudents()">🔄 รีเฟรช</button>
+          </div>
+        </div>
+        <div class="filter-row">
+          <div class="filter-tab active" onclick="setSFilter('all',this)">ทั้งหมด</div>
+          <div class="filter-tab" onclick="setSFilter('odd',this)">🔬 กลุ่มทดลอง</div>
+          <div class="filter-tab" onclick="setSFilter('even',this)">📋 กลุ่มควบคุม</div>
+          <div class="filter-tab" onclick="setSFilter('pre_done',this)">✅ Pre-test เสร็จ</div>
+          <div class="filter-tab" onclick="setSFilter('pre_pending',this)">⏳ ยังไม่ทำ Pre</div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Username</th><th>กลุ่ม</th><th>ลงทะเบียน</th><th>Pre-test</th><th>คะแนน Pre</th><th>Post-test</th><th>คะแนน Post</th><th>จัดการ</th></tr></thead>
+            <tbody id="s-tbody"><tr><td colspan="8" class="table-empty">⏳ กำลังโหลด...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- LOGS -->
+    <div id="tab-logs" class="tab-panel">
+      <div class="card">
+        <div class="card-header">
+          <div><h2>📋 ประวัติการใช้งาน</h2><p class="card-subtitle">Session logs ของผู้เข้าร่วมวิจัย</p></div>
+          <button class="btn btn-ghost btn-sm" onclick="loadLogs()">🔄 รีเฟรช</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Username</th><th>Session</th><th>คะแนน</th><th>เวลา</th></tr></thead>
+            <tbody id="log-tbody"><tr><td colspan="4" class="table-empty">กดรีเฟรชเพื่อโหลด</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div id="tab-settings" class="tab-panel">
+      <div class="card">
+        <div class="card-header">
+          <div><h2>🗓️ กำหนดวันทำ Quiz</h2><p class="card-subtitle">ตั้งวันที่จริงสำหรับแต่ละ Quiz Day — นิสิตทุกคนจะเปิดใช้งานพร้อมกัน</p></div>
+          <button class="btn btn-ghost btn-sm" onclick="loadSettings()">🔄 รีเฟรช</button>
+        </div>
+        <div class="sched-grid">
+          <div class="sched-card sched-d1">
+            <div class="sched-label" style="color:var(--primary)">📅 Quiz Day 1</div>
+            <input type="date" id="date-d1" class="sched-input">
+            <div class="sched-btns">
+              <button class="btn btn-primary btn-sm" style="flex:1" onclick="saveSched('day_1_date','date-d1','ss-d1')">บันทึก</button>
+              <button class="btn btn-ghost btn-sm" onclick="clearSched('day_1_date','date-d1','ss-d1')">ล้าง</button>
+            </div>
+            <p id="ss-d1" class="sched-status">—</p>
+          </div>
+          <div class="sched-card sched-d3">
+            <div class="sched-label" style="color:#8B5500">📅 Quiz Day 3</div>
+            <input type="date" id="date-d3" class="sched-input">
+            <div class="sched-btns">
+              <button class="btn btn-warning btn-sm" style="flex:1" onclick="saveSched('day_3_date','date-d3','ss-d3')">บันทึก</button>
+              <button class="btn btn-ghost btn-sm" onclick="clearSched('day_3_date','date-d3','ss-d3')">ล้าง</button>
+            </div>
+            <p id="ss-d3" class="sched-status">—</p>
+          </div>
+          <div class="sched-card sched-d7">
+            <div class="sched-label" style="color:#1a7a33">📅 Quiz Day 7</div>
+            <input type="date" id="date-d7" class="sched-input">
+            <div class="sched-btns">
+              <button class="btn btn-success btn-sm" style="flex:1" onclick="saveSched('day_7_date','date-d7','ss-d7')">บันทึก</button>
+              <button class="btn btn-ghost btn-sm" onclick="clearSched('day_7_date','date-d7','ss-d7')">ล้าง</button>
+            </div>
+            <p id="ss-d7" class="sched-status">—</p>
+          </div>
+          <div class="sched-card sched-pt">
+            <div class="sched-label" style="color:#B22A21">📝 Post-test</div>
+            <input type="date" id="date-pt" class="sched-input">
+            <div class="sched-btns">
+              <button class="btn btn-danger btn-sm" style="flex:1" onclick="saveSched('posttest_date','date-pt','ss-pt')">บันทึก</button>
+              <button class="btn btn-ghost btn-sm" onclick="clearSched('posttest_date','date-pt','ss-pt')">ล้าง</button>
+            </div>
+            <p id="ss-pt" class="sched-status">—</p>
+          </div>
+        </div>
+        <div class="info-box">💡 <strong>วิธีใช้:</strong> ตั้งวันทั้ง 4 แล้วกดบันทึก — นิสิตจะเห็น countdown นับถอยหลัง กด <strong>ล้าง</strong> เพื่อปิดการใช้งาน</div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div><h2>🔑 Group PINs</h2><p class="card-subtitle">รหัสที่ใช้แบ่งกลุ่มตอนลงทะเบียน — เปลี่ยนได้ตามต้องการ</p></div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div style="background:rgba(0,48,135,0.06);border:1px solid rgba(0,48,135,0.15);border-radius:12px;padding:16px">
+            <div style="font-size:11px;font-weight:700;color:var(--primary);margin-bottom:8px">🔬 กลุ่มทดลอง (Odd)</div>
+            <code style="font-size:20px;font-weight:800;color:var(--primary)">ODD25</code>
+            <div style="font-size:11px;color:var(--text-3);margin-top:6px">แก้ไขได้ใน demo-register.html บรรทัด GROUP_PINS</div>
+          </div>
+          <div style="background:rgba(255,159,10,0.07);border:1px solid rgba(255,159,10,0.2);border-radius:12px;padding:16px">
+            <div style="font-size:11px;font-weight:700;color:#8B5500;margin-bottom:8px">📋 กลุ่มควบคุม (Even)</div>
+            <code style="font-size:20px;font-weight:800;color:#8B5500">EVEN25</code>
+            <div style="font-size:11px;color:var(--text-3);margin-top:6px">แก้ไขได้ใน demo-register.html บรรทัด GROUP_PINS</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="test-card">
+        <div class="card-header">
+          <div><h2>🧪 โหมดทดสอบระบบ</h2><p class="card-subtitle">จำลองสถานะของนิสิตให้เป็น Pre-test เสร็จแล้ว หรือ Post-test เสร็จแล้ว</p></div>
+        </div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px">
+          <div style="flex:1;min-width:160px">
+            <label style="font-size:12px;font-weight:600;color:var(--text-3);display:block;margin-bottom:5px">Username ที่ต้องการทดสอบ</label>
+            <input type="text" id="test-uid" placeholder="เช่น star99" style="padding:10px 14px;border:1.5px solid rgba(60,60,67,0.2);border-radius:10px;font-size:14px;outline:none;width:100%;background:rgba(255,255,255,0.7);font-family:inherit">
+          </div>
+          <div>
+            <label style="font-size:12px;font-weight:600;color:var(--text-3);display:block;margin-bottom:5px">จำลองเป็น</label>
+            <select id="test-mode-sel" style="padding:10px 14px;border:1.5px solid rgba(60,60,67,0.2);border-radius:10px;font-size:14px;outline:none;background:rgba(255,255,255,0.7);font-family:inherit">
+              <option value="pre">✅ Pre-test เสร็จแล้ว</option>
+              <option value="post">✅ Post-test เสร็จแล้ว</option>
+              <option value="reset">↩ Reset ทั้งหมด</option>
+            </select>
+          </div>
+          <div style="display:flex;align-items:flex-end">
+            <button class="btn btn-primary" onclick="setTestMode()">🧪 ใช้งาน</button>
+          </div>
+        </div>
+        <p style="font-size:12px;color:var(--text-3);line-height:1.5">⚠️ ใช้สำหรับทดสอบระบบเท่านั้น กด Reset เพื่อคืนสถานะหลังทดสอบเสร็จ</p>
+      </div>
+    </div>
+
+    <!-- RESET -->
+    <div id="tab-reset" class="tab-panel">
+      <div class="card">
+        <div class="card-header"><div><h2>🔄 Reset ความคืบหน้ารายคน</h2><p class="card-subtitle">ล้าง pre_test_done และ post_test_done ของนิสิตที่เลือก</p></div></div>
+        <div style="display:flex;gap:10px;margin-bottom:12px">
+          <input type="text" id="reset-uid-input" placeholder="กรอก username เช่น star99" style="flex:1;padding:11px 14px;border:1.5px solid rgba(60,60,67,0.2);border-radius:10px;font-size:14px;outline:none;background:rgba(255,255,255,0.7);font-family:inherit">
+          <button class="btn btn-warning" onclick="resetOneStudent()">Reset คนนี้</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div><h2>🔄 Reset ความคืบหน้าทุกคน</h2><p class="card-subtitle">ล้าง pre/post test status ของทุกคนพร้อมกัน</p></div></div>
+        <button class="btn btn-warning" onclick="confirmAction('resetAll')">🔄 Reset ทุกคน</button>
+      </div>
+
+      <div class="danger-zone">
+        <div class="card-header"><div><h2>🗑️ ล้าง Session Logs ทั้งหมด</h2><p class="card-subtitle">ลบประวัติการตอบทั้งหมด — ควร Export CSV ก่อนเสมอ</p></div></div>
+        <p style="font-size:13px;color:var(--danger);margin-bottom:14px;font-weight:600">⚠️ ควร Export CSV ก่อนกดปุ่มนี้เสมอ</p>
+        <button class="btn btn-danger" onclick="confirmAction('clearLogs')">🗑️ ล้าง Session Logs ทั้งหมด</button>
+      </div>
+
+      <div class="full-reset-zone">
+        <div class="card-header"><div><h2>💥 Full Reset — ลบบัญชีทั้งหมด</h2><p class="card-subtitle">ลบบัญชีนิสิตและ logs ทั้งหมด — เริ่มวิจัยใหม่ตั้งแต่ต้น</p></div></div>
+        <p style="font-size:13px;color:#991b1b;margin-bottom:14px;font-weight:600">⚠️ กู้คืนไม่ได้เด็ดขาด — ใช้เฉพาะก่อนเริ่มวิจัยรอบใหม่</p>
+        <button class="btn btn-danger" onclick="confirmAction('fullReset')">💥 Full Reset ระบบทั้งหมด</button>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /app -->
+
+<!-- MODAL: Question -->
+<div class="modal-overlay" id="q-modal">
+  <div class="modal" style="max-width:560px">
+    <h3 id="q-modal-title">เพิ่มข้อสอบ</h3>
+    <input type="hidden" id="q-edit-id">
+    <div class="form-group">
+      <label>ประเภท *</label>
+      <select id="q-type">
+        <option value="pre">📝 Pre-test</option>
+        <option value="post">🎯 Post-test</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>ลำดับที่</label>
+      <input type="number" id="q-order" placeholder="เช่น 1" min="1">
+    </div>
+    <div class="form-group">
+      <label>คำถาม *</label>
+      <textarea id="q-text" placeholder="Which term refers to..."></textarea>
+    </div>
+    <div class="form-group">
+      <label>คำตอบที่ถูก *</label>
+      <input type="text" id="q-correct" placeholder="เช่น Hypertension">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="form-group"><label>ตัวเลือกผิดที่ 1 *</label><input type="text" id="q-w1" placeholder="เช่น Hypotension"></div>
+      <div class="form-group"><label>ตัวเลือกผิดที่ 2 *</label><input type="text" id="q-w2" placeholder="เช่น Tachycardia"></div>
+      <div class="form-group"><label>ตัวเลือกผิดที่ 3 *</label><input type="text" id="q-w3" placeholder="เช่น Bradycardia"></div>
+      <div class="form-group"><label>ตัวเลือกผิดที่ 4 *</label><input type="text" id="q-w4" placeholder="เช่น Arrhythmia"></div>
+    </div>
+    <div class="form-group">
+      <label>คำอธิบาย (แสดงหลังตอบ)</label>
+      <textarea id="q-exp" placeholder="อธิบายคำตอบที่ถูกต้อง..."></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('q-modal')">ยกเลิก</button>
+      <button class="btn btn-primary" onclick="saveQuestion()">บันทึก</button>
+    </div>
   </div>
 </div>
 
-<!-- Confirm Delete Dialog -->
-<div class="overlay" id="del-overlay">
-  <div class="dialog">
-    <div class="d-icon">🗑️</div>
-    <h3>ลบบัญชีนี้?</h3>
-    <p>รหัส <strong id="del-uid-text"></strong><br>ข้อมูลทั้งหมดจะถูกลบถาวร ไม่สามารถกู้คืนได้</p>
-    <div class="dialog-btns">
-      <button class="btn-cancel" onclick="closeDialog()">ยกเลิก</button>
-      <button class="btn-confirm-del" onclick="confirmDelete()">ลบเลย</button>
+<!-- MODAL: Confirm -->
+<div class="modal-overlay" id="confirm-modal">
+  <div class="modal" style="max-width:360px;text-align:center">
+    <div style="font-size:48px;margin-bottom:12px" id="confirm-icon">⚠️</div>
+    <h3 id="confirm-title">ยืนยัน?</h3>
+    <p id="confirm-desc" style="margin-top:8px;font-size:14px;color:var(--text-3);margin-bottom:0"></p>
+    <div class="modal-footer" style="justify-content:center;margin-top:20px">
+      <button class="btn btn-ghost" onclick="closeModal('confirm-modal')">ยกเลิก</button>
+      <button class="btn btn-danger" id="confirm-btn">ยืนยัน</button>
     </div>
   </div>
 </div>
 
-<!-- Toast -->
 <div class="toast" id="toast"></div>
 
 <script>
-  const SUPABASE_URL = 'https://dbchducvmgkkccwemmhl.supabase.co';
-  const SUPABASE_KEY = 'sb_publishable_5O2V4_4eY3umLJgQhm6BAQ_0psABX8g';
-  const HEADERS = {
-    'apikey': SUPABASE_KEY,
-    'Authorization': `Bearer ${SUPABASE_KEY}`,
-    'Content-Type': 'application/json'
-  };
+const SUPABASE_URL = 'https://dbchducvmgkkccwemmhl.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_5O2V4_4eY3umLJgQhm6BAQ_0psABX8g';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const ADMIN_PASSWORD = 'ADMIN2025';
 
-  // === Admin Password — เปลี่ยนได้ตามต้องการ ===
-  const ADMIN_PASSWORD = 'ADMIN2025';
+// ── AUTH ──
+function adminLogin() {
+  const pass = document.getElementById('admin-pass').value.trim().toUpperCase();
+  const errEl = document.getElementById('login-error');
+  if (pass === ADMIN_PASSWORD) {
+    sessionStorage.setItem('mv_admin','1');
+    enterAdmin();
+  } else {
+    errEl.textContent = '❌ รหัสผ่านไม่ถูกต้อง';
+  }
+}
+function enterAdmin() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  loadDashboard(); loadQuestions(); loadStudents(); loadSettings();
+  updateRefreshTime();
+}
+function adminLogout() { sessionStorage.removeItem('mv_admin'); location.reload(); }
+document.getElementById('admin-pass').addEventListener('keydown', e => { if(e.key==='Enter') adminLogin(); });
+if (sessionStorage.getItem('mv_admin')==='1') enterAdmin();
 
-  let allUsers = [];
-  let currentFilter = 'all';
-  let deleteTarget = null;
+function updateRefreshTime() {
+  const now = new Date();
+  document.getElementById('refresh-time').textContent = `อัปเดต ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')} น.`;
+}
 
-  // ── Auth ──
-  function adminLogin() {
-    const pass = document.getElementById('admin-pass').value.trim().toUpperCase();
-    if (pass === ADMIN_PASSWORD) {
-      sessionStorage.setItem('mv_admin', '1');
-      document.getElementById('login-screen').style.display = 'none';
-      document.getElementById('main-screen').style.display = 'block';
-      loadUsers();
-    } else {
-      document.getElementById('admin-err').style.display = 'block';
+// ── TABS ──
+function switchTab(id, el) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  el.classList.add('active');
+}
+
+// ── DASHBOARD ──
+let allUsers = [];
+async function loadDashboard() {
+  const { data } = await sb.from('users').select('*').order('registered_at');
+  allUsers = data || [];
+  const total = allUsers.length;
+  const exp   = allUsers.filter(u=>u.group==='odd').length;
+  const ctrl  = allUsers.filter(u=>u.group==='even').length;
+  const pre   = allUsers.filter(u=>u.pre_test_done).length;
+  const post  = allUsers.filter(u=>u.post_test_done).length;
+  document.getElementById('s-total').textContent = total;
+  document.getElementById('s-exp').textContent   = exp;
+  document.getElementById('s-ctrl').textContent  = ctrl;
+  document.getElementById('s-pre').textContent   = pre;
+  document.getElementById('s-post').textContent  = post;
+
+  const pct = (n,d) => d>0 ? Math.round(n/d*100) : 0;
+  const progHTML = (label, n, total, color) => `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:12px">
+      <div style="width:60px;color:var(--text-3);font-weight:600">${label}</div>
+      <div style="flex:1;height:8px;background:rgba(0,0,0,0.07);border-radius:99px;overflow:hidden">
+        <div style="height:100%;border-radius:99px;background:${color};width:${pct(n,total)}%;transition:width 0.6s"></div>
+      </div>
+      <div style="font-size:11px;font-weight:700;color:var(--text-3)">${n}/${total}</div>
+    </div>`;
+
+  const expUsers = allUsers.filter(u=>u.group==='odd');
+  const ctrlUsers = allUsers.filter(u=>u.group==='even');
+  document.getElementById('exp-progress').innerHTML =
+    progHTML('Pre-test', expUsers.filter(u=>u.pre_test_done).length, expUsers.length, 'linear-gradient(90deg,var(--primary),var(--primary-l))') +
+    progHTML('Post-test', expUsers.filter(u=>u.post_test_done).length, expUsers.length, 'linear-gradient(90deg,var(--success),#28a745)');
+  document.getElementById('ctrl-progress').innerHTML =
+    progHTML('Pre-test', ctrlUsers.filter(u=>u.pre_test_done).length, ctrlUsers.length, 'linear-gradient(90deg,#C9A84C,#E8C96A)') +
+    progHTML('Post-test', ctrlUsers.filter(u=>u.post_test_done).length, ctrlUsers.length, 'linear-gradient(90deg,var(--success),#28a745)');
+
+  renderScoreChart(allUsers);
+  updateRefreshTime();
+}
+
+let scoreChart = null;
+function renderScoreChart(users) {
+  const expPre  = users.filter(u=>u.group==='odd'  && u.pre_test_score!=null).map(u=>u.pre_test_score);
+  const ctrlPre = users.filter(u=>u.group==='even' && u.pre_test_score!=null).map(u=>u.pre_test_score);
+  const avg = arr => arr.length ? (arr.reduce((a,b)=>a+b,0)/arr.length).toFixed(1) : 0;
+  const ctx = document.getElementById('chart-scores').getContext('2d');
+  if (scoreChart) scoreChart.destroy();
+  scoreChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Pre-test เฉลี่ย (กลุ่มทดลอง)', 'Pre-test เฉลี่ย (กลุ่มควบคุม)'],
+      datasets: [{
+        data: [avg(expPre), avg(ctrlPre)],
+        backgroundColor: ['rgba(0,48,135,0.7)', 'rgba(201,168,76,0.7)'],
+        borderRadius: 8, borderSkipped: false,
+      }]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false} },
+      scales:{ y:{ beginAtZero:true, max:15, grid:{color:'rgba(0,0,0,0.05)'} } }
     }
-  }
-
-  function adminLogout() {
-    sessionStorage.removeItem('mv_admin');
-    location.reload();
-  }
-
-  document.getElementById('admin-pass').addEventListener('keydown', e => {
-    if (e.key === 'Enter') adminLogin();
   });
+}
 
-  // Check session
-  if (sessionStorage.getItem('mv_admin') === '1') {
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('main-screen').style.display = 'block';
-    loadUsers();
+// ── QUESTIONS ──
+let allQuestions = [], qFilter = 'all';
+async function loadQuestions() {
+  const { data } = await sb.from('questions').select('*').order('test_type').order('order_num');
+  allQuestions = data || [];
+  renderQTable();
+}
+function setQFilter(f, el) {
+  qFilter = f;
+  document.querySelectorAll('#tab-questions .filter-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  renderQTable();
+}
+function renderQTable() {
+  const qs = qFilter==='all' ? allQuestions : allQuestions.filter(q=>q.test_type===qFilter);
+  const tbody = document.getElementById('q-tbody');
+  if (!qs.length) { tbody.innerHTML = '<tr><td colspan="5" class="table-empty">ยังไม่มีข้อสอบ กดเพิ่มข้อสอบได้เลย</td></tr>'; return; }
+  tbody.innerHTML = qs.map(q => `
+    <tr>
+      <td style="font-weight:700;color:var(--text-3)">${q.order_num || '—'}</td>
+      <td><span class="chip ${q.test_type==='pre' ? 'chip-odd' : 'chip-even'}">${q.test_type==='pre' ? '📝 Pre' : '🎯 Post'}</span></td>
+      <td style="max-width:300px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${q.question_text || '—'}</td>
+      <td style="color:var(--success);font-weight:600">${q.correct_answer || '—'}</td>
+      <td style="display:flex;gap:6px">
+        <button class="btn btn-ghost btn-sm" onclick="editQuestion(${q.id})">✏️ แก้ไข</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteQuestion(${q.id})">🗑️</button>
+      </td>
+    </tr>`).join('');
+}
+function openQModal(id) {
+  document.getElementById('q-edit-id').value = '';
+  document.getElementById('q-modal-title').textContent = 'เพิ่มข้อสอบ';
+  ['q-type','q-order','q-text','q-correct','q-w1','q-w2','q-w3','q-w4','q-exp'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el.tagName==='SELECT') el.value = 'pre'; else el.value = '';
+  });
+  document.getElementById('q-modal').classList.add('show');
+}
+function editQuestion(id) {
+  const q = allQuestions.find(q=>q.id===id);
+  if (!q) return;
+  document.getElementById('q-edit-id').value  = id;
+  document.getElementById('q-modal-title').textContent = 'แก้ไขข้อสอบ';
+  document.getElementById('q-type').value    = q.test_type || 'pre';
+  document.getElementById('q-order').value   = q.order_num || '';
+  document.getElementById('q-text').value    = q.question_text || '';
+  document.getElementById('q-correct').value = q.correct_answer || '';
+  document.getElementById('q-w1').value      = q.wrong1 || '';
+  document.getElementById('q-w2').value      = q.wrong2 || '';
+  document.getElementById('q-w3').value      = q.wrong3 || '';
+  document.getElementById('q-w4').value      = q.wrong4 || '';
+  document.getElementById('q-exp').value     = q.explanation || '';
+  document.getElementById('q-modal').classList.add('show');
+}
+async function saveQuestion() {
+  const editId = document.getElementById('q-edit-id').value;
+  const payload = {
+    test_type:      document.getElementById('q-type').value,
+    order_num:      parseInt(document.getElementById('q-order').value) || null,
+    question_text:  document.getElementById('q-text').value.trim(),
+    correct_answer: document.getElementById('q-correct').value.trim(),
+    wrong1:         document.getElementById('q-w1').value.trim(),
+    wrong2:         document.getElementById('q-w2').value.trim(),
+    wrong3:         document.getElementById('q-w3').value.trim(),
+    wrong4:         document.getElementById('q-w4').value.trim(),
+    explanation:    document.getElementById('q-exp').value.trim(),
+  };
+  if (!payload.question_text || !payload.correct_answer) { showToast('⚠️ กรุณากรอกคำถามและคำตอบ'); return; }
+  if (editId) {
+    await sb.from('questions').update(payload).eq('id', editId);
+    showToast('✅ แก้ไขข้อสอบแล้ว');
+  } else {
+    await sb.from('questions').insert(payload);
+    showToast('✅ เพิ่มข้อสอบแล้ว');
   }
+  closeModal('q-modal'); loadQuestions();
+}
+async function deleteQuestion(id) {
+  if (!confirm('ลบข้อสอบนี้?')) return;
+  await sb.from('questions').delete().eq('id', id);
+  showToast('🗑️ ลบข้อสอบแล้ว'); loadQuestions();
+}
 
-  // ── Load Users ──
-  async function loadUsers() {
-    document.getElementById('user-tbody').innerHTML =
-      '<tr><td colspan="8" class="table-empty">⏳ กำลังโหลด...</td></tr>';
-    try {
-      const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/users?select=*&order=registered_at.asc`,
-        { headers: HEADERS }
-      );
-      allUsers = await res.json();
-      updateStats();
-      renderTable();
-      const now = new Date();
-      document.getElementById('last-refresh').textContent =
-        `อัปเดต ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')} น.`;
-    } catch (e) {
-      document.getElementById('user-tbody').innerHTML =
-        '<tr><td colspan="8" class="table-empty">❌ โหลดข้อมูลไม่สำเร็จ</td></tr>';
+// ── STUDENTS ──
+let sFilter = 'all';
+async function loadStudents() {
+  const { data } = await sb.from('users').select('*').order('registered_at');
+  allUsers = data || [];
+  renderSTable();
+}
+function setSFilter(f, el) {
+  sFilter = f;
+  document.querySelectorAll('#tab-students .filter-tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  renderSTable();
+}
+function renderSTable() {
+  let users = allUsers;
+  if (sFilter==='odd')         users = allUsers.filter(u=>u.group==='odd');
+  if (sFilter==='even')        users = allUsers.filter(u=>u.group==='even');
+  if (sFilter==='pre_done')    users = allUsers.filter(u=>u.pre_test_done);
+  if (sFilter==='pre_pending') users = allUsers.filter(u=>!u.pre_test_done);
+  const tbody = document.getElementById('s-tbody');
+  if (!users.length) { tbody.innerHTML = '<tr><td colspan="8" class="table-empty">ไม่มีข้อมูล</td></tr>'; return; }
+  tbody.innerHTML = users.map(u => {
+    const d = new Date(u.registered_at);
+    const dateStr = `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()+543}`;
+    const preS  = u.pre_test_score  != null ? `<span class="${u.pre_test_score>=10?'score-high':u.pre_test_score>=7?'score-mid':'score-low'}">${u.pre_test_score}/15</span>` : '<span style="color:#ccc">—</span>';
+    const postS = u.post_test_score != null ? `<span class="${u.post_test_score>=10?'score-high':u.post_test_score>=7?'score-mid':'score-low'}">${u.post_test_score}/15</span>` : '<span style="color:#ccc">—</span>';
+    return `<tr>
+      <td><code style="font-weight:800;color:var(--primary);background:rgba(0,48,135,0.08);padding:2px 8px;border-radius:6px">${u.username}</code></td>
+      <td><span class="chip ${u.group==='odd'?'chip-odd':'chip-even'}">${u.group==='odd'?'🔬 ทดลอง':'📋 ควบคุม'}</span></td>
+      <td style="color:var(--text-3);font-size:12px">${dateStr}</td>
+      <td><span class="dot-badge"><span class="dot ${u.pre_test_done?'dot-green':'dot-grey'}"></span>${u.pre_test_done?'เสร็จ':'รอ'}</span></td>
+      <td>${preS}</td>
+      <td><span class="dot-badge"><span class="dot ${u.post_test_done?'dot-green':'dot-grey'}"></span>${u.post_test_done?'เสร็จ':'รอ'}</span></td>
+      <td>${postS}</td>
+      <td style="display:flex;gap:4px;flex-wrap:wrap">
+        <button class="btn btn-ghost btn-sm" onclick="togglePre('${u.username}',${u.pre_test_done})" title="Toggle Pre-test">${u.pre_test_done?'↩ Pre':'✅ Pre'}</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteStudent('${u.username}')">🗑️</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+async function togglePre(username, current) {
+  await sb.from('users').update({ pre_test_done: !current }).eq('username', username);
+  showToast(`✅ อัปเดต Pre-test ของ ${username}`);
+  loadStudents(); loadDashboard();
+}
+async function deleteStudent(username) {
+  if (!confirm(`ลบบัญชี "${username}"?\nข้อมูลทั้งหมดจะหายถาวร`)) return;
+  await sb.from('sessions').delete().eq('uid', username);
+  await sb.from('users').delete().eq('username', username);
+  showToast(`🗑️ ลบ ${username} แล้ว`); loadStudents(); loadDashboard();
+}
+
+// ── LOGS ──
+async function loadLogs() {
+  const { data } = await sb.from('sessions').select('*').order('completed_at', {ascending:false}).limit(100);
+  const tbody = document.getElementById('log-tbody');
+  if (!data || !data.length) { tbody.innerHTML = '<tr><td colspan="4" class="table-empty">ยังไม่มี logs</td></tr>'; return; }
+  tbody.innerHTML = data.map(l => {
+    const d = new Date(l.completed_at);
+    const dateStr = `${d.getDate()}/${d.getMonth()+1} ${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;
+    return `<tr>
+      <td><code style="font-weight:700;color:var(--primary)">${l.uid}</code></td>
+      <td>Session ${l.session_number}</td>
+      <td>${l.score != null ? `<strong>${l.score}/5</strong>` : '—'}</td>
+      <td style="color:var(--text-3);font-size:12px">${dateStr}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── SETTINGS ──
+async function loadSettings() {
+  const { data } = await sb.from('settings').select('key,value');
+  const map = {};
+  (data||[]).forEach(r => map[r.key] = r.value);
+  const scheds = [
+    {key:'day_1_date',inputId:'date-d1',statusId:'ss-d1',label:'Day 1'},
+    {key:'day_3_date',inputId:'date-d3',statusId:'ss-d3',label:'Day 3'},
+    {key:'day_7_date',inputId:'date-d7',statusId:'ss-d7',label:'Day 7'},
+    {key:'posttest_date',inputId:'date-pt',statusId:'ss-pt',label:'Post-test'},
+  ];
+  scheds.forEach(s => {
+    const val = map[s.key] || '';
+    document.getElementById(s.inputId).value = val;
+    const st = document.getElementById(s.statusId);
+    if (val) {
+      const d = new Date(val+'T00:00:00+07:00');
+      st.textContent = '✅ ' + d.toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit'});
+      st.style.color = '#34C759';
+    } else {
+      st.textContent = '⚙️ ยังไม่ได้ตั้ง'; st.style.color = 'var(--text-3)';
     }
-  }
+  });
+}
+async function saveSched(key, inputId, statusId) {
+  const val = document.getElementById(inputId).value;
+  if (!val) { showToast('⚠️ กรุณาเลือกวันที่ก่อน'); return; }
+  await sb.from('settings').upsert({key, value:val}, {onConflict:'key'});
+  showToast('✅ บันทึกวันที่แล้ว'); loadSettings();
+}
+async function clearSched(key, inputId, statusId) {
+  await sb.from('settings').upsert({key, value:null}, {onConflict:'key'});
+  document.getElementById(inputId).value = '';
+  showToast('🗑️ ล้างวันที่แล้ว'); loadSettings();
+}
+async function setTestMode() {
+  const uid  = document.getElementById('test-uid').value.trim();
+  const mode = document.getElementById('test-mode-sel').value;
+  if (!uid) { showToast('⚠️ กรุณากรอก Username'); return; }
+  let patch = {};
+  if (mode==='pre')   patch = { pre_test_done: true };
+  if (mode==='post')  patch = { pre_test_done: true, post_test_done: true };
+  if (mode==='reset') patch = { pre_test_done: false, post_test_done: false, pre_test_score: null, post_test_score: null };
+  const { error } = await sb.from('users').update(patch).eq('username', uid);
+  if (error) { showToast('❌ ไม่พบ username นี้'); return; }
+  showToast(`✅ อัปเดต ${uid} → ${mode} แล้ว`); loadStudents(); loadDashboard();
+}
 
-  // ── Stats ──
-  function updateStats() {
-    const total  = allUsers.length;
-    const odd    = allUsers.filter(u => u.group === 'odd').length;
-    const even   = allUsers.filter(u => u.group === 'even').length;
-    const pre    = allUsers.filter(u => u.pre_test_done).length;
-    const pct    = total > 0 ? Math.round(pre / total * 100) : 0;
-    document.getElementById('stat-total').textContent   = total;
-    document.getElementById('stat-odd').textContent     = odd;
-    document.getElementById('stat-even').textContent    = even;
-    document.getElementById('stat-pretest').textContent = pre;
-    document.getElementById('stat-pretest-pct').textContent = `คน (${pct}%)`;
-  }
-
-  // ── Filter ──
-  function setFilter(f, el) {
-    currentFilter = f;
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    el.classList.add('active');
-    renderTable();
-  }
-
-  function getFiltered() {
-    if (currentFilter === 'odd')    return allUsers.filter(u => u.group === 'odd');
-    if (currentFilter === 'even')   return allUsers.filter(u => u.group === 'even');
-    if (currentFilter === 'pretest') return allUsers.filter(u => u.pre_test_done);
-    if (currentFilter === 'nopt')   return allUsers.filter(u => !u.pre_test_done);
-    return allUsers;
-  }
-
-  // ── Render Table ──
-  function renderTable() {
-    const users = getFiltered();
-    const tbody = document.getElementById('user-tbody');
-    if (users.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="8" class="table-empty">ไม่มีข้อมูล</td></tr>';
-      return;
+// ── RESET ──
+async function resetOneStudent() {
+  const uid = document.getElementById('reset-uid-input').value.trim();
+  if (!uid) { showToast('⚠️ กรุณากรอก username'); return; }
+  await sb.from('users').update({ pre_test_done:false, post_test_done:false, pre_test_score:null, post_test_score:null }).eq('username', uid);
+  showToast(`✅ Reset ${uid} แล้ว`); loadStudents();
+}
+let confirmCallback = null;
+function confirmAction(type) {
+  const configs = {
+    resetAll:  { icon:'🔄', title:'Reset ทุกคน?', desc:'ล้าง pre/post test status ของทุกคน', btn:'Reset ทุกคน' },
+    clearLogs: { icon:'🗑️', title:'ล้าง Logs ทั้งหมด?', desc:'ประวัติการตอบทั้งหมดจะถูกลบถาวร', btn:'ล้าง Logs' },
+    fullReset: { icon:'💥', title:'Full Reset ระบบ?', desc:'ลบบัญชีนิสิตและ logs ทั้งหมด — กู้คืนไม่ได้เด็ดขาด', btn:'Full Reset' },
+  };
+  const c = configs[type];
+  document.getElementById('confirm-icon').textContent  = c.icon;
+  document.getElementById('confirm-title').textContent = c.title;
+  document.getElementById('confirm-desc').textContent  = c.desc;
+  document.getElementById('confirm-btn').textContent   = c.btn;
+  confirmCallback = async () => {
+    closeModal('confirm-modal');
+    if (type==='resetAll') {
+      await sb.from('users').update({ pre_test_done:false, post_test_done:false, pre_test_score:null, post_test_score:null }).neq('username','__none__');
+      showToast('✅ Reset ทุกคนแล้ว'); loadStudents(); loadDashboard();
+    } else if (type==='clearLogs') {
+      await sb.from('sessions').delete().neq('id', 0);
+      showToast('🗑️ ล้าง Logs แล้ว'); loadLogs();
+    } else if (type==='fullReset') {
+      await sb.from('sessions').delete().neq('id', 0);
+      await sb.from('users').delete().neq('username','__none__');
+      showToast('💥 Full Reset เสร็จ'); loadStudents(); loadDashboard();
     }
-    tbody.innerHTML = users.map(u => {
-      const regDate = new Date(u.registered_at);
-      const dateStr = `${regDate.getDate()}/${regDate.getMonth()+1}/${regDate.getFullYear()+543} ${regDate.getHours()}:${String(regDate.getMinutes()).padStart(2,'0')}`;
-      const preScore  = u.pre_test_score  != null ? scoreHTML(u.pre_test_score, 15)  : '<span style="color:#ccc">—</span>';
-      const postScore = u.post_test_score != null ? scoreHTML(u.post_test_score, 15) : '<span style="color:#ccc">—</span>';
-      return `
-        <tr>
-          <td><span class="uid-badge">${u.uid}</span></td>
-          <td><span class="group-chip ${u.group === 'odd' ? 'chip-odd' : 'chip-even'}">
-            ${u.group === 'odd' ? '🔬 ทดลอง' : '📋 ควบคุม'}
-          </span></td>
-          <td style="color:#999;font-size:12px">${dateStr}</td>
-          <td>
-            <span class="status-dot">
-              <span class="dot ${u.pre_test_done ? 'dot-green' : 'dot-grey'}"></span>
-              ${u.pre_test_done ? 'เสร็จแล้ว' : 'ยังไม่ทำ'}
-            </span>
-          </td>
-          <td>${preScore}</td>
-          <td>
-            <span class="status-dot">
-              <span class="dot ${u.post_test_done ? 'dot-green' : 'dot-grey'}"></span>
-              ${u.post_test_done ? 'เสร็จแล้ว' : 'ยังไม่ทำ'}
-            </span>
-          </td>
-          <td>${postScore}</td>
-          <td style="display:flex;gap:6px;flex-wrap:wrap">
-            <button class="btn-sm ${u.pre_test_done ? 'btn-toggle undo' : 'btn-toggle'}"
-              onclick="togglePretest('${u.uid}', ${u.pre_test_done})">
-              ${u.pre_test_done ? '↩ ยกเลิก Pre' : '✅ ทำ Pre แล้ว'}
-            </button>
-            <button class="btn-sm btn-delete" onclick="askDelete('${u.uid}')">🗑️ ลบ</button>
-          </td>
-        </tr>`;
-    }).join('');
-  }
+  };
+  document.getElementById('confirm-btn').onclick = confirmCallback;
+  document.getElementById('confirm-modal').classList.add('show');
+}
 
-  function scoreHTML(score, max) {
-    const pct = score / max;
-    const cls = pct >= 0.7 ? 'score-high' : pct >= 0.4 ? 'score-mid' : 'score-low';
-    return `<span class="score-badge ${cls}">${score}/${max}</span>`;
-  }
+// ── EXPORT ──
+function exportCSV(type) {
+  let users = allUsers;
+  if (type==='pre')  users = allUsers.filter(u=>u.pre_test_done);
+  if (type==='post') users = allUsers.filter(u=>u.post_test_done);
+  if (!users.length) { showToast('ไม่มีข้อมูลให้ export'); return; }
+  const header = ['username','group','registered_at','pre_test_done','pre_test_score','post_test_done','post_test_score'];
+  const rows   = users.map(u => [u.username, u.group, u.registered_at, u.pre_test_done?1:0, u.pre_test_score??'', u.post_test_done?1:0, u.post_test_score??'']);
+  const csv = [header,...rows].map(r=>r.join(',')).join('\n');
+  const blob = new Blob(['﻿'+csv], {type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `medvocab_${type}_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  showToast('⬇️ Export สำเร็จ');
+}
 
-  // ── Toggle Pre-test ──
-  async function togglePretest(uid, current) {
-    try {
-      await fetch(`${SUPABASE_URL}/rest/v1/users?uid=eq.${uid}`, {
-        method: 'PATCH',
-        headers: HEADERS,
-        body: JSON.stringify({ pre_test_done: !current })
-      });
-      showToast(`✅ อัปเดตสถานะ Pre-test ของ ${uid} แล้ว`);
-      await loadUsers();
-    } catch (e) {
-      showToast('❌ เกิดข้อผิดพลาด');
-    }
-  }
-
-  // ── Delete ──
-  function askDelete(uid) {
-    deleteTarget = uid;
-    document.getElementById('del-uid-text').textContent = uid;
-    document.getElementById('del-overlay').classList.add('show');
-  }
-
-  function closeDialog() {
-    deleteTarget = null;
-    document.getElementById('del-overlay').classList.remove('show');
-  }
-
-  async function confirmDelete() {
-    if (!deleteTarget) return;
-    closeDialog();
-    try {
-      // Delete sessions first
-      await fetch(`${SUPABASE_URL}/rest/v1/sessions?uid=eq.${deleteTarget}`, {
-        method: 'DELETE', headers: HEADERS
-      });
-      // Delete user
-      await fetch(`${SUPABASE_URL}/rest/v1/users?uid=eq.${deleteTarget}`, {
-        method: 'DELETE', headers: HEADERS
-      });
-      showToast(`🗑️ ลบบัญชี ${deleteTarget} แล้ว`);
-      await loadUsers();
-    } catch (e) {
-      showToast('❌ ลบไม่สำเร็จ');
-    }
-    deleteTarget = null;
-  }
-
-  // ── Export CSV ──
-  function exportCSV() {
-    if (allUsers.length === 0) { showToast('ไม่มีข้อมูลให้ export'); return; }
-    const header = ['uid','group','registered_at','pre_test_done','pre_test_score','post_test_done','post_test_score'];
-    const rows = allUsers.map(u => [
-      u.uid,
-      u.group,
-      u.registered_at,
-      u.pre_test_done ? '1' : '0',
-      u.pre_test_score ?? '',
-      u.post_test_done ? '1' : '0',
-      u.post_test_score ?? ''
-    ]);
-    const csv = [header, ...rows].map(r => r.join(',')).join('\n');
-    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `medvocab_data_${new Date().toISOString().slice(0,10)}.csv`;
-    a.click();
-    showToast('⬇️ Export CSV สำเร็จ');
-  }
-
-  // ── Toast ──
-  function showToast(msg) {
-    const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.classList.add('show');
-    setTimeout(() => t.classList.remove('show'), 2800);
-  }
+// ── UTILS ──
+function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
 </script>
 </body>
 </html>
